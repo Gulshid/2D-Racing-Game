@@ -18,7 +18,7 @@ class MenuScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             FilledButton(
-              onPressed: () => context.go(AppRoutes.race),
+              onPressed: () => context.go(AppRoutes.setup),
               child: const Text('PLAY'),
             ),
           ],
