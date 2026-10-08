@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:racing_game/game/systems/fixed_stepper.dart';
+import 'package:racing/game/systems/fixed_stepper.dart';
 
 void main() {
   test('runs the right number of steps and keeps the remainder', () {
