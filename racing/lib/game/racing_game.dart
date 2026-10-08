@@ -3,10 +3,11 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
-import 'package:racing_game/core/constants/game_config.dart';
-import 'package:racing_game/game/components/test_box.dart';
-import 'package:racing_game/game/systems/fixed_stepper.dart';
-import 'package:racing_game/game/systems/fixed_update.dart';
+import 'package:racing/core/constants/game_config.dart';
+import 'package:racing/game/components/test_box.dart';
+import 'package:racing/game/systems/fixed_stepper.dart';
+import 'package:racing/game/systems/fixed_update.dart';
+
 
 class RacingGame extends FlameGame {
   RacingGame();

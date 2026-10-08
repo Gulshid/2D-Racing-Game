@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:racing_game/app/router.dart';
-import 'package:racing_game/app/theme.dart';
+import 'package:racing/app/router.dart';
+import 'package:racing/app/theme.dart';
+
 
 class RacingApp extends StatelessWidget {
   const RacingApp({super.key});

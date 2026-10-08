@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:racing_game/game/racing_game.dart';
+import 'package:racing/game/racing_game.dart';
 
 class HudOverlay extends StatelessWidget {
   const HudOverlay({required this.game, super.key});

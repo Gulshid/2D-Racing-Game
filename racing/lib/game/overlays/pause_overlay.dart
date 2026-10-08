@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:racing_game/app/router.dart';
-import 'package:racing_game/game/racing_game.dart';
+import 'package:racing/app/router.dart';
+import 'package:racing/game/racing_game.dart';
+
 
 class PauseOverlay extends StatelessWidget {
   const PauseOverlay({required this.game, super.key});

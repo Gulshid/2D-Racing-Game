@@ -1,9 +1,10 @@
 import 'dart:ui';
 
 import 'package:flame/components.dart';
-import 'package:racing_game/core/constants/game_config.dart';
-import 'package:racing_game/game/racing_game.dart';
-import 'package:racing_game/game/systems/fixed_update.dart';
+import 'package:racing/core/constants/game_config.dart';
+import 'package:racing/game/racing_game.dart';
+import 'package:racing/game/systems/fixed_update.dart';
+
 
 /// Temporary component proving the loop and fixed timestep work.
 class TestBox extends RectangleComponent

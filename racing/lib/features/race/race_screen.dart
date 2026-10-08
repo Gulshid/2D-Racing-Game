@@ -1,9 +1,10 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'package:racing_game/game/overlays/hud_overlay.dart';
-import 'package:racing_game/game/overlays/loading_view.dart';
-import 'package:racing_game/game/overlays/pause_overlay.dart';
-import 'package:racing_game/game/racing_game.dart';
+import 'package:racing/game/overlays/hud_overlay.dart';
+import 'package:racing/game/overlays/loading_view.dart';
+import 'package:racing/game/overlays/pause_overlay.dart';
+import 'package:racing/game/racing_game.dart';
+
 
 class RaceScreen extends StatefulWidget {
   const RaceScreen({super.key});

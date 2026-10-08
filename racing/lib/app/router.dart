@@ -1,7 +1,7 @@
 import 'package:go_router/go_router.dart';
-import 'package:racing_game/features/menu/menu_screen.dart';
-import 'package:racing_game/features/race/race_screen.dart';
-import 'package:racing_game/features/splash/splash_screen.dart';
+import 'package:racing/features/menu/menu_screen.dart';
+import 'package:racing/features/race/race_screen.dart';
+import 'package:racing/features/splash/splash_screen.dart';
 
 abstract final class AppRoutes {
   static const splash = '/';
