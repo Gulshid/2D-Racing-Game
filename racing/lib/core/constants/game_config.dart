@@ -125,4 +125,91 @@ abstract final class GameConfig {
 
   /// Ghost car sample rate (samples per second of lap time).
   static const int ghostRate = 20;
+
+  // ---- AI opponents (Phase 7) ----------------------------------------------
+  static const int aiMaxOpponents = 6;
+  static const int aiDefaultOpponents = 5;
+
+  /// AI decisions run this often. Physics still runs every fixed step.
+  static const double aiThinkInterval = 1 / 30;
+
+  // Racing line
+  /// Relaxation passes that pull the line toward the shortest path.
+  static const int aiLineIterations = 400;
+
+  /// How far from the road centre the line may go (fraction of half width).
+  static const double aiLineLimit = 0.62;
+  static const int aiSmoothRadius = 4;
+  static const int aiSmoothPasses = 3;
+
+  /// Bad-surface zones: the line steers around them where it can.
+  static const double aiZoneMargin = 0.03;
+  static const double aiZonePad = 0.25;
+  static const double aiMinCornerSpeed = 110;
+
+  /// Nitro is only used when the road is straight this far ahead (px).
+  static const double aiNitroLookAhead = 700;
+
+  // Steering
+  static const double aiLookMin = 90;
+  static const double aiLookMax = 340;
+  static const double aiSteerGain = 2.2;
+
+  /// Above this heading error (rad) the AI just turns as hard as it can.
+  static const double aiTurnAroundAngle = 0.9;
+
+  /// Speed limit (px/s) while turning around, so the U-turn fits the road.
+  static const double aiTurnAroundSpeed = 90;
+
+  /// How fast the AI slides sideways off its line (px/s).
+  static const double aiLateralRate = 140;
+
+  /// The AI never aims closer than this to the road edge (px).
+  static const double aiEdgeMargin = 30;
+
+  // Speed control
+  static const double aiThrottleBand = 30;
+  static const double aiBrakeDeadband = 10;
+  static const double aiBrakeBand = 50;
+
+  /// Finished AI cars keep driving at this fraction of top speed.
+  static const double aiFinishedCruise = 0.35;
+  static const double aiNitroMinMeter = 0.3;
+  static const double aiNitroMaxSteerError = 0.12;
+
+  // Traffic (overtaking and avoidance)
+  static const double aiSensorRange = 260;
+  static const double aiSensorSpeedFactor = 0.25;
+  static const double aiSideGap = 18;
+
+  /// Cars this close beside us still count as blocking.
+  static const double aiAlongside = 48;
+  static const double aiFollowDistance = 70;
+  static const double aiFollowGain = 1.5;
+
+  /// The chosen passing side is kept until no car was in the way this long.
+  static const double aiPassHold = 1;
+
+  /// While there is room to pass, the AI keeps at least this speed so it
+  /// can steer around a slow or stopped car instead of waiting behind it.
+  static const double aiPassCreepSpeed = 90;
+
+  // Mistakes
+  static const double aiMistakeMinSpeed = 200;
+
+  // Recovery
+  static const double aiStuckSpeed = 25;
+  static const double aiStuckSeconds = 1.4;
+  static const double aiReverseSeconds = 0.9;
+
+  /// Angle to the road direction (rad) that counts as "spun out".
+  static const double aiSpunAngle = 2.2;
+  static const double aiSpunSeconds = 1.2;
+  static const int aiRespawnAfterRecoveries = 3;
+  static const double aiRecoveryWindow = 15;
+
+  // Rubber band (light catch-up / slow-down relative to the player)
+  static const bool aiRubberBand = true;
+  static const double aiRubberDeadZone = 400;
+  static const double aiRubberRange = 2000;
 }
