@@ -1,23 +1,30 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart' show KeyEvent, LogicalKeyboardKey;
+import 'package:flutter/services.dart'
+    show KeyDownEvent, KeyEvent, LogicalKeyboardKey;
 import 'package:flutter/widgets.dart' show KeyEventResult;
 import 'package:racing/core/constants/game_config.dart';
+import 'package:racing/data/models/ai_profile.dart';
 import 'package:racing/data/models/car_stats.dart';
 import 'package:racing/data/models/race_records.dart';
 import 'package:racing/data/models/race_result.dart';
 import 'package:racing/data/models/track_data.dart';
+import 'package:racing/game/components/car/ai_car.dart';
+import 'package:racing/game/components/car/car_physics.dart';
 import 'package:racing/game/components/car/ghost_car.dart';
 import 'package:racing/game/components/car/player_car.dart';
+import 'package:racing/game/components/effects/ai_debug_overlay.dart';
 import 'package:racing/game/components/effects/spark_emitter.dart';
 import 'package:racing/game/components/props/cone_component.dart';
 import 'package:racing/game/components/props/pickup_component.dart';
 import 'package:racing/game/components/track/track_component.dart';
 import 'package:racing/game/components/track/track_map.dart';
+import 'package:racing/game/systems/ai_profiler.dart';
 import 'package:racing/game/systems/camera_controller.dart';
 import 'package:racing/game/systems/collision_system.dart';
 import 'package:racing/game/systems/fixed_stepper.dart';
@@ -26,11 +33,18 @@ import 'package:racing/game/systems/ghost_recorder.dart';
 import 'package:racing/game/systems/hud_state.dart';
 import 'package:racing/game/systems/impact_feedback.dart';
 import 'package:racing/game/systems/input_controller.dart';
+import 'package:racing/game/systems/minimap_marker.dart';
 import 'package:racing/game/systems/race_hud_state.dart';
 import 'package:racing/game/systems/race_manager.dart';
+import 'package:racing/game/systems/racing_line.dart';
 
 class RacingGame extends FlameGame with KeyboardEvents {
-  RacingGame({required this.trackData, required this.carStats});
+  RacingGame({
+    required this.trackData,
+    required this.carStats,
+    this.difficulty = AiDifficulty.medium,
+    this.aiCount = GameConfig.aiDefaultOpponents,
+  });
 
   static const String hudOverlay = 'hud';
   static const String controlsOverlay = 'controls';
@@ -41,6 +55,10 @@ class RacingGame extends FlameGame with KeyboardEvents {
   final TrackData trackData;
   final CarStats carStats;
 
+  /// How good the AI drivers are, and how many of them race (0-6).
+  final AiDifficulty difficulty;
+  final int aiCount;
+
   // These are created lazily so overlays can read them at any time.
   late final TrackMap track = TrackMap(trackData);
   late final PlayerCar car = PlayerCar(stats: carStats);
@@ -50,10 +68,33 @@ class RacingGame extends FlameGame with KeyboardEvents {
   late final GhostCar ghost = GhostCar();
   late final RaceCarState playerState =
       RaceCarState(id: 'player', name: carStats.name, isPlayer: true);
+
+  // ---- AI opponents (Phase 7) ----------------------------------------------
+  late final RacingLine racingLine = RacingLine.build(track);
+  late final List<AiCar> aiCars = _buildAiCars();
+
+  /// Physics of every car on the track (player first). Used for traffic
+  /// sensing and collisions.
+  late final List<CarPhysics> allPhysics = [
+    car.physics,
+    for (final ai in aiCars) ai.physics,
+  ];
+  late final List<MinimapMarker> minimapMarkers = [
+    for (final ai in aiCars) MinimapMarker(ai.physics.position, ai.profile.color),
+  ];
+
+  /// Shows the racing line, aim points and sensors of the AI cars.
+  final ValueNotifier<bool> aiDebug = ValueNotifier<bool>(false);
+
+  /// Measures AI cost per frame; shown in the debug HUD.
+  final AiProfiler aiProfiler = AiProfiler();
+  final ValueNotifier<double> aiCostMs = ValueNotifier<double>(0);
+  int _frame = 0;
+
   late final RaceManager race = RaceManager(
     track: track,
     totalLaps: trackData.laps,
-    cars: [playerState],
+    cars: [playerState, for (final ai in aiCars) ai.state],
   );
 
   final InputController input = InputController();
@@ -123,8 +164,10 @@ class RacingGame extends FlameGame with KeyboardEvents {
     }
     await world.addAll(_cones);
     await world.addAll(_pickups);
+    await world.addAll(aiCars);
     await world.add(car);
     await world.add(sparks);
+    await world.add(AiDebugOverlay());
     await world.add(cameraController);
 
     _setUpSystems();
@@ -135,7 +178,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
   void _setUpSystems() {
     collisions = CollisionSystem(
       track: track,
-      cars: [car.physics],
+      cars: allPhysics,
       cones: _cones,
       pickups: _pickups,
       player: car.physics,
@@ -187,6 +230,37 @@ class RacingGame extends FlameGame with KeyboardEvents {
     };
   }
 
+  List<AiCar> _buildAiCars() {
+    final roster = AiProfile.roster(
+      base: carStats,
+      difficulty: difficulty,
+      count: math.max(0, math.min(aiCount, GameConfig.aiMaxOpponents)),
+    );
+    return [
+      for (var i = 0; i < roster.length; i++)
+        AiCar(profile: roster[i], slot: i + 1, line: racingLine),
+    ];
+  }
+
+  /// How many px [state] is ahead of the player (negative = behind). Null
+  /// when rubber-banding should not apply (race not running, player done).
+  double? gapToPlayer(RaceCarState state) {
+    if (race.state != RaceState.racing || playerState.finished) return null;
+    return (state.totalProgress - playerState.totalProgress) * track.length;
+  }
+
+  /// Puts an AI car back on the road at its last checkpoint.
+  void respawnAi(AiCar ai) {
+    if (!race.canDrive) return;
+    final progress = race.respawnProgress(ai.state);
+    final f = track.frame(progress);
+    final nitro = ai.physics.nitro;
+    ai.resetTo(f.position, f.heading);
+    ai.physics.nitro = nitro;
+  }
+
+  void toggleAiDebug() => aiDebug.value = !aiDebug.value;
+
   /// Add image file names (relative to assets/images/) as you add assets.
   Future<void> _preloadAssets() async {
     const imageFiles = <String>[];
@@ -210,6 +284,12 @@ class RacingGame extends FlameGame with KeyboardEvents {
     input.reset();
     _stepper.reset();
     cameraController.snap();
+
+    for (final ai in aiCars) {
+      final slot = track.spawn(ai.slot);
+      ai.resetTo(slot.position, slot.heading);
+      ai.controller.reset();
+    }
 
     for (final c in _cones) {
       c.reset();
@@ -267,6 +347,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
       reward: RaceResult.rewardFor(playerState.position, playerState.coins),
       newBestLap: newBestLap,
       newBestTotal: newBestTotal,
+      standings: _standings(),
     );
 
     input.reset();
@@ -275,6 +356,20 @@ class RacingGame extends FlameGame with KeyboardEvents {
       ..remove(controlsOverlay)
       ..remove(tuningOverlay)
       ..add(resultsOverlay);
+  }
+
+  List<StandingEntry> _standings() {
+    final order = List<RaceCarState>.of(race.cars)
+      ..sort((a, b) => a.position.compareTo(b.position));
+    return [
+      for (final s in order)
+        StandingEntry(
+          name: s.name,
+          isPlayer: s.isPlayer,
+          position: s.position,
+          time: s.finished ? s.finishTime : null,
+        ),
+    ];
   }
 
   @override
@@ -300,6 +395,18 @@ class RacingGame extends FlameGame with KeyboardEvents {
           step,
         );
       }
+      for (final ai in aiCars) {
+        final aq = ai.lastQuery;
+        if (aq != null) {
+          race.observe(
+            ai.state,
+            aq,
+            ai.physics.velocity.x,
+            ai.physics.velocity.y,
+            step,
+          );
+        }
+      }
     });
 
     super.update(dt);
@@ -316,6 +423,9 @@ class RacingGame extends FlameGame with KeyboardEvents {
         car.physics.heading,
       );
     }
+
+    aiProfiler.endFrame();
+    if (++_frame % 20 == 0) aiCostMs.value = aiProfiler.averageMs;
 
     _updateHud();
   }
@@ -370,6 +480,9 @@ class RacingGame extends FlameGame with KeyboardEvents {
           down(LogicalKeyboardKey.shiftRight) ||
           down(LogicalKeyboardKey.keyN);
     if (down(LogicalKeyboardKey.keyR)) respawnPlayer();
+    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.keyB) {
+      toggleAiDebug();
+    }
     return KeyEventResult.handled;
   }
 

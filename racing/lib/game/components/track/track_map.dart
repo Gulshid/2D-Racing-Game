@@ -284,19 +284,15 @@ class TrackMap {
     );
   }
 
-  /// Start grid slot. Slot 0 is the pole position (player).
+  /// Start grid slot. Slot 0 is the pole position (player), slots 1-6 are
+  /// the AI cars. Slots are placed along the road (not in a straight line
+  /// behind the start), so the last rows stay on the asphalt in corners.
   ({Vector2 position, double heading}) spawn(int slot) {
-    final t = tangents[0];
-    final n = normals[0];
     final row = slot ~/ 2;
     final side = slot.isEven ? -1.0 : 1.0;
     final back = 70.0 + row * 70.0;
-    final lateralOffset = side * halfWidth * 0.4;
-    final pos = Vector2(
-      points[0].x - t.x * back + n.x * lateralOffset,
-      points[0].y - t.y * back + n.y * lateralOffset,
-    );
-    return (position: pos, heading: math.atan2(t.y, t.x));
+    final f = frame(-back / length, side * 0.4);
+    return (position: f.position, heading: f.heading);
   }
 
   List<PropSpawn> _buildProps() {
