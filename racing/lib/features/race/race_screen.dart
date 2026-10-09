@@ -1,5 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:racing/data/models/ai_profile.dart';
 import 'package:racing/data/models/car_stats.dart';
 import 'package:racing/data/tracks/track_library.dart';
 import 'package:racing/game/overlays/hud_overlay.dart';
@@ -11,10 +12,18 @@ import 'package:racing/game/overlays/tuning_overlay.dart';
 import 'package:racing/game/racing_game.dart';
 
 class RaceScreen extends StatefulWidget {
-  const RaceScreen({required this.trackId, required this.carIndex, super.key});
+  const RaceScreen({
+    required this.trackId,
+    required this.carIndex,
+    this.difficulty = AiDifficulty.medium,
+    this.aiCount = 5,
+    super.key,
+  });
 
   final String trackId;
   final int carIndex;
+  final AiDifficulty difficulty;
+  final int aiCount;
 
   @override
   State<RaceScreen> createState() => _RaceScreenState();
@@ -29,6 +38,8 @@ class _RaceScreenState extends State<RaceScreen> with WidgetsBindingObserver {
     _game = RacingGame(
       trackData: TrackLibrary.byId(widget.trackId),
       carStats: CarPresets.byIndex(widget.carIndex),
+      difficulty: widget.difficulty,
+      aiCount: widget.aiCount,
     );
     WidgetsBinding.instance.addObserver(this);
   }

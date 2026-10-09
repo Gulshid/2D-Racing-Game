@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:racing/app/router.dart';
+import 'package:racing/core/constants/game_config.dart';
+import 'package:racing/data/models/ai_profile.dart';
 import 'package:racing/data/models/car_stats.dart';
 import 'package:racing/data/models/track_data.dart';
 import 'package:racing/data/tracks/track_library.dart';
@@ -18,6 +20,8 @@ class RaceSetupScreen extends StatefulWidget {
 class _RaceSetupScreenState extends State<RaceSetupScreen> {
   int _track = 0;
   int _car = 0;
+  AiDifficulty _difficulty = AiDifficulty.medium;
+  int _opponents = GameConfig.aiDefaultOpponents;
 
   late final List<TrackMap> _maps =
       TrackLibrary.all.map(TrackMap.new).toList();
@@ -49,6 +53,8 @@ class _RaceSetupScreenState extends State<RaceSetupScreen> {
                       AppRoutes.raceUrl(
                         trackId: TrackLibrary.all[_track].id,
                         carIndex: _car,
+                        difficulty: _difficulty,
+                        aiCount: _opponents,
                       ),
                     ),
                     icon: const Icon(Icons.flag),
@@ -86,6 +92,50 @@ class _RaceSetupScreenState extends State<RaceSetupScreen> {
                     onTap: () => setState(() => _car = i),
                   ),
                 ),
+              ),
+              const SizedBox(height: 10),
+              const _Label('OPPONENTS'),
+              Wrap(
+                spacing: 16,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  SegmentedButton<AiDifficulty>(
+                    showSelectedIcon: false,
+                    segments: [
+                      for (final d in AiDifficulty.values)
+                        ButtonSegment(value: d, label: Text(d.label)),
+                    ],
+                    selected: {_difficulty},
+                    onSelectionChanged: (v) =>
+                        setState(() => _difficulty = v.first),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton.filledTonal(
+                        onPressed: _opponents > 0
+                            ? () => setState(() => _opponents--)
+                            : null,
+                        icon: const Icon(Icons.remove),
+                      ),
+                      SizedBox(
+                        width: 96,
+                        child: Text(
+                          _opponents == 1 ? '1 AI car' : '$_opponents AI cars',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      IconButton.filledTonal(
+                        onPressed: _opponents < GameConfig.aiMaxOpponents
+                            ? () => setState(() => _opponents++)
+                            : null,
+                        icon: const Icon(Icons.add),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
