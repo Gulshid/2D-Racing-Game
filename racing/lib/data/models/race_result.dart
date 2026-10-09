@@ -1,3 +1,20 @@
+/// One line of the final standings.
+class StandingEntry {
+  const StandingEntry({
+    required this.name,
+    required this.isPlayer,
+    required this.position,
+    required this.time,
+  });
+
+  final String name;
+  final bool isPlayer;
+  final int position;
+
+  /// Finish time in seconds, or null if the car was still racing.
+  final double? time;
+}
+
 /// Everything the results screen needs after a race.
 class RaceResult {
   const RaceResult({
@@ -12,6 +29,7 @@ class RaceResult {
     required this.reward,
     required this.newBestLap,
     required this.newBestTotal,
+    this.standings = const [],
   });
 
   final String trackName;
@@ -27,6 +45,9 @@ class RaceResult {
   final int reward;
   final bool newBestLap;
   final bool newBestTotal;
+
+  /// All cars in finishing order (player included).
+  final List<StandingEntry> standings;
 
   static const List<int> positionRewards = [100, 60, 40, 25, 15, 10];
   static const int coinValue = 5;
