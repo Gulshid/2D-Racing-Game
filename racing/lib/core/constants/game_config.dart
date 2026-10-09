@@ -54,6 +54,10 @@ abstract final class GameConfig {
   static const double cameraLookAhead = 0.3;
   static const double cameraSpeedForMinZoom = 620;
 
+  /// Max camera shake offset in px at full trauma, and how fast it fades.
+  static const double shakeMax = 16;
+  static const double shakeDecay = 2.2;
+
   // ---- Track ---------------------------------------------------------------
   /// Approximate distance in px between centerline samples.
   static const double trackSampleSpacing = 20;
@@ -61,4 +65,64 @@ abstract final class GameConfig {
 
   /// How many samples either side of the last known index are searched first.
   static const int trackQueryWindow = 30;
+
+  // ---- Walls (Phase 5) -----------------------------------------------------
+  /// Drivable grass/sand between the curb and the barrier.
+  static const double runoffWidth = 70;
+  static const double barrierThickness = 14;
+  static const double wallRestitution = 0.35;
+
+  /// Fraction of sideways speed lost on an impact with a wall.
+  static const double wallFriction = 0.12;
+
+  /// Continuous speed loss per second while scraping along a wall.
+  static const double wallScrapeDrag = 1.2;
+
+  /// How strongly an impact at the car's nose or tail rotates the car.
+  static const double wallYawFactor = 8e-5;
+
+  /// Each car is two circles (front and rear) for collisions.
+  static const double carCircleRadius = 14;
+  static const double carCircleOffset = 12;
+
+  // ---- Car vs car ----------------------------------------------------------
+  static const double carRestitution = 0.3;
+  static const double carYawFactor = 6e-5;
+
+  // ---- Props ---------------------------------------------------------------
+  static const double coneRadius = 9;
+  static const double coinRadius = 10;
+  static const double nitroPickupRadius = 16;
+  static const double coneHitSlowdown = 0.93;
+  static const double nitroPickupAmount = 0.5;
+  static const double nitroRespawnSeconds = 12;
+
+  /// Boost pad size: length along the road, width as a fraction of the road.
+  static const double padLength = 70;
+  static const double padWidthFactor = 0.55;
+  static const double padBoostSeconds = 1.2;
+  static const double padBoostPower = 2.2;
+  static const double padKick = 120;
+
+  // ---- Anti-stuck ----------------------------------------------------------
+  static const double stuckTime = 3;
+  static const double stuckSpeed = 30;
+
+  // ---- Sparks --------------------------------------------------------------
+  static const int sparkPoolSize = 120;
+
+  // ---- Race (Phase 6) ------------------------------------------------------
+  static const int countdownSeconds = 3;
+  static const double goDisplaySeconds = 0.8;
+
+  /// Approximate distance in px between checkpoints.
+  static const double checkpointSpacing = 800;
+
+  /// A progress change bigger than this in one step is a teleport; ignored.
+  static const double progressJumpLimit = 0.2;
+  static const double wrongWaySeconds = 1.2;
+  static const double wrongWayMinSpeed = 60;
+
+  /// Ghost car sample rate (samples per second of lap time).
+  static const int ghostRate = 20;
 }
