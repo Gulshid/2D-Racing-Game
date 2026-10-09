@@ -29,6 +29,7 @@ class HudOverlay extends StatelessWidget {
                 painter: MinimapPainter(
                   map: game.track,
                   carPosition: () => game.car.physics.position,
+                  markers: game.minimapMarkers,
                   repaint: game.minimapTick,
                 ),
               ),
@@ -49,6 +50,14 @@ class HudOverlay extends StatelessWidget {
             child: Row(
               children: [
                 if (kDebugMode) ...[
+                  _AiCostChip(game: game),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    tooltip: 'AI debug view (B)',
+                    onPressed: game.toggleAiDebug,
+                    icon: const Icon(Icons.smart_toy),
+                  ),
+                  const SizedBox(width: 8),
                   IconButton.filledTonal(
                     onPressed: game.toggleTuning,
                     icon: const Icon(Icons.tune),
@@ -122,6 +131,31 @@ class HudOverlay extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Debug only: how many milliseconds per frame the AI uses.
+class _AiCostChip extends StatelessWidget {
+  const _AiCostChip({required this.game});
+
+  final RacingGame game;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double>(
+      valueListenable: game.aiCostMs,
+      builder: (context, ms, _) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0x99000000),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          'AI ${ms.toStringAsFixed(2)} ms',
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+        ),
       ),
     );
   }

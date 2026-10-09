@@ -3,14 +3,22 @@ import 'dart:math' as math;
 import 'package:flame/extensions.dart' show Vector2;
 import 'package:flutter/material.dart';
 import 'package:racing/game/components/track/track_map.dart';
+import 'package:racing/game/systems/minimap_marker.dart';
 
 /// Draws a track outline (and optionally a moving car dot).
 class MinimapPainter extends CustomPainter {
-  MinimapPainter({required this.map, this.carPosition, Listenable? repaint})
-      : super(repaint: repaint);
+  MinimapPainter({
+    required this.map,
+    this.carPosition,
+    this.markers = const [],
+    Listenable? repaint,
+  }) : super(repaint: repaint);
 
   final TrackMap map;
   final Vector2 Function()? carPosition;
+
+  /// Other cars (AI opponents), drawn under the player's dot.
+  final List<MinimapMarker> markers;
 
   Path? _path;
   Size? _pathSize;
@@ -68,6 +76,15 @@ class MinimapPainter extends CustomPainter {
 
     final startA = _map(map.points[0].x, map.points[0].y);
     canvas.drawCircle(startA, 3, Paint()..color = const Color(0xFF7CFC9A));
+
+    final dot = Paint();
+    for (final m in markers) {
+      canvas.drawCircle(
+        _map(m.position.x, m.position.y),
+        3.5,
+        dot..color = m.color,
+      );
+    }
 
     final car = carPosition?.call();
     if (car != null) {

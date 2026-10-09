@@ -92,6 +92,17 @@ class _Card extends StatelessWidget {
                   ),
               ],
             ),
+            if (result.standings.length > 1) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final s in result.standings) _standing(s),
+                ],
+              ),
+            ],
             const SizedBox(height: 14),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -113,6 +124,25 @@ class _Card extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _standing(StandingEntry s) {
+    final name = s.isPlayer ? 'YOU' : s.name;
+    final time = s.time == null ? 'racing' : formatTime(s.time!);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: s.isPlayer ? const Color(0x55FFC107) : const Color(0x33FFFFFF),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '${s.position}. $name  $time',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: s.isPlayer ? FontWeight.w900 : FontWeight.w600,
         ),
       ),
     );
