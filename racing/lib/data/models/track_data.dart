@@ -30,6 +30,38 @@ class TrackTheme {
   final SurfaceType offRoad;
 }
 
+/// Things placed on a track.
+enum PropType { cone, boostPad, coin, nitro }
+
+/// One prop, or a row of identical props, placed along the track.
+class TrackProp {
+  const TrackProp({
+    required this.type,
+    required this.progress,
+    this.lateral = 0,
+    this.count = 1,
+    this.spacing = 70,
+    this.lateralStep = 0,
+  });
+
+  final PropType type;
+
+  /// Position along the track, 0..1.
+  final double progress;
+
+  /// Sideways position across the road, -1 left edge .. 1 right edge.
+  final double lateral;
+
+  /// Number of props in the row.
+  final int count;
+
+  /// Distance in px between props along the road.
+  final double spacing;
+
+  /// Change of [lateral] from one prop to the next.
+  final double lateralStep;
+}
+
 /// A patch of special surface on the road, defined along the track.
 class SurfaceZone {
   const SurfaceZone({
@@ -63,6 +95,7 @@ class TrackData {
     required this.controlPoints,
     required this.theme,
     this.zones = const [],
+    this.props = const [],
     this.seed = 1,
   });
 
@@ -79,6 +112,9 @@ class TrackData {
   final List<Offset> controlPoints;
   final TrackTheme theme;
   final List<SurfaceZone> zones;
+
+  /// Cones, boost pads, coins and nitro pickups.
+  final List<TrackProp> props;
 
   /// Seed for decoration placement so a track always looks the same.
   final int seed;
