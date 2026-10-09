@@ -5,6 +5,7 @@ import 'package:racing/data/tracks/track_library.dart';
 import 'package:racing/game/overlays/hud_overlay.dart';
 import 'package:racing/game/overlays/loading_view.dart';
 import 'package:racing/game/overlays/pause_overlay.dart';
+import 'package:racing/game/overlays/results_overlay.dart';
 import 'package:racing/game/overlays/touch_controls_overlay.dart';
 import 'package:racing/game/overlays/tuning_overlay.dart';
 import 'package:racing/game/racing_game.dart';
@@ -61,6 +62,8 @@ class _RaceScreenState extends State<RaceScreen> with WidgetsBindingObserver {
           RacingGame.tuningOverlay: (context, game) =>
               TuningOverlay(game: game),
           RacingGame.pauseOverlay: (context, game) => PauseOverlay(game: game),
+          RacingGame.resultsOverlay: (context, game) =>
+              ResultsOverlay(game: game),
         },
         initialActiveOverlays: const [
           RacingGame.hudOverlay,

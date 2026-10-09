@@ -15,6 +15,7 @@ class TrackQuery {
     required this.index,
     required this.lateral,
     required this.progress,
+    required this.closest,
   });
 
   final SurfaceType surface;
@@ -30,12 +31,32 @@ class TrackQuery {
 
   /// Progress along the track, 0..1.
   final double progress;
+
+  /// Nearest point on the centerline.
+  final Vector2 closest;
 }
 
 class DecorItem {
   const DecorItem(this.position, this.size);
   final Vector2 position;
   final double size;
+}
+
+/// A prop with its final world position.
+class PropSpawn {
+  const PropSpawn({
+    required this.type,
+    required this.position,
+    required this.heading,
+    required this.tangent,
+    required this.normal,
+  });
+
+  final PropType type;
+  final Vector2 position;
+  final double heading;
+  final Vector2 tangent;
+  final Vector2 normal;
 }
 
 /// Geometry of a track: a smooth closed centerline sampled into points, with
@@ -57,8 +78,15 @@ class TrackMap {
   /// Trees / rocks placed away from the road. Built on first use.
   late final List<DecorItem> decor = _buildDecor();
 
+  /// Cones, pads, coins and pickups with world positions. Built on first use.
+  late final List<PropSpawn> props = _buildProps();
+
   int get count => points.length;
   double get halfWidth => data.roadWidth / 2;
+
+  /// Distance from the centerline at which the barrier surface starts.
+  double get wallDistance =>
+      halfWidth + GameConfig.curbWidth + GameConfig.runoffWidth;
 
   void _build() {
     final cp = data.controlPoints.map((o) => Vector2(o.dx, o.dy)).toList();
@@ -191,7 +219,8 @@ class TrackMap {
       distance: dist,
       index: bestI,
       lateral: lateral,
-      progress: progress > 1 ? progress - 1 : progress,
+      progress: progress >= 1 ? progress - 1 : progress,
+      closest: Vector2(cx, cy),
     );
   }
 
@@ -211,6 +240,50 @@ class TrackMap {
     return data.theme.offRoad;
   }
 
+  /// World position and direction at [progress] (0..1) and a sideways offset
+  /// [lateral] (-1 left edge .. 1 right edge).
+  ({Vector2 position, double heading, Vector2 tangent, Vector2 normal}) frame(
+    double progress, [
+    double lateral = 0,
+  ]) {
+    var p = progress % 1.0;
+    if (p < 0) p += 1;
+    final s = p * length;
+
+    var lo = 0;
+    var hi = count - 1;
+    while (lo < hi) {
+      final mid = (lo + hi + 1) ~/ 2;
+      if (cumulative[mid] <= s) {
+        lo = mid;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    final i = lo;
+    final a = points[i];
+    final b = points[(i + 1) % count];
+    final segLen = a.distanceTo(b);
+    final t = segLen == 0 ? 0.0 : clampD((s - cumulative[i]) / segLen, 0, 1);
+
+    final cx = a.x + (b.x - a.x) * t;
+    final cy = a.y + (b.y - a.y) * t;
+    final t0 = tangents[i];
+    final t1 = tangents[(i + 1) % count];
+    final tangent = Vector2(
+      t0.x + (t1.x - t0.x) * t,
+      t0.y + (t1.y - t0.y) * t,
+    )..normalize();
+    final normal = Vector2(-tangent.y, tangent.x);
+    final off = lateral * halfWidth;
+    return (
+      position: Vector2(cx + normal.x * off, cy + normal.y * off),
+      heading: math.atan2(tangent.y, tangent.x),
+      tangent: tangent,
+      normal: normal,
+    );
+  }
+
   /// Start grid slot. Slot 0 is the pole position (player).
   ({Vector2 position, double heading}) spawn(int slot) {
     final t = tangents[0];
@@ -226,13 +299,34 @@ class TrackMap {
     return (position: pos, heading: math.atan2(t.y, t.x));
   }
 
+  List<PropSpawn> _buildProps() {
+    final out = <PropSpawn>[];
+    for (final prop in data.props) {
+      for (var k = 0; k < prop.count; k++) {
+        final progress = prop.progress + k * prop.spacing / length;
+        final lateral = prop.lateral + k * prop.lateralStep;
+        final f = frame(progress, lateral);
+        out.add(
+          PropSpawn(
+            type: prop.type,
+            position: f.position,
+            heading: f.heading,
+            tangent: f.tangent,
+            normal: f.normal,
+          ),
+        );
+      }
+    }
+    return out;
+  }
+
   List<DecorItem> _buildDecor() {
     final rnd = math.Random(data.seed);
     final area = bounds.inflate(900);
     final out = <DecorItem>[];
     final maxTries = data.theme.decorationCount * 20;
     var tries = 0;
-    final safe = halfWidth + GameConfig.curbWidth + 80;
+    final safe = wallDistance + GameConfig.barrierThickness + 30;
     while (out.length < data.theme.decorationCount && tries < maxTries) {
       tries++;
       final p = Vector2(

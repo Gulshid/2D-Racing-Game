@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:racing/core/constants/game_config.dart';
 import 'package:racing/data/models/surface_type.dart';
+import 'package:racing/data/models/track_data.dart';
 import 'package:racing/game/components/track/track_map.dart';
 
 /// Draws the whole track once into a cached Picture, then replays it each
@@ -56,6 +57,18 @@ class TrackComponent extends Component {
 
     _drawDecor(canvas, shadowOnly: true);
 
+    // Barriers: a ring around the whole drivable area. Everything inside
+    // "wall distance" is cleared again with the ground color.
+    final wall = map.wallDistance;
+    const barrier = GameConfig.barrierThickness;
+    canvas
+      ..drawPath(centerline, stroke(theme.curbA, (wall + barrier) * 2))
+      ..drawPath(
+        _dash(centerline, 40, 40),
+        stroke(theme.curbB, (wall + barrier) * 2),
+      )
+      ..drawPath(centerline, stroke(theme.grass, wall * 2));
+
     // Curbs: solid color A, dashes of color B on top, asphalt narrower.
     canvas
       ..drawPath(centerline, stroke(theme.curbA, road + curb * 2))
@@ -66,6 +79,7 @@ class TrackComponent extends Component {
       ..drawPath(centerline, stroke(theme.road, road));
 
     _drawZones(canvas);
+    _drawBoostPads(canvas);
 
     canvas.drawPath(_dash(centerline, 28, 28), stroke(theme.line, 4));
 
@@ -136,6 +150,43 @@ class TrackComponent extends Component {
       }
       path.close();
       canvas.drawPath(path, Paint()..color = _zoneColor(z.surface));
+    }
+  }
+
+  void _drawBoostPads(Canvas canvas) {
+    const len = GameConfig.padLength;
+    final width = map.data.roadWidth * GameConfig.padWidthFactor;
+    final base = Paint()..color = const Color(0xE61565C0);
+    final chevron = Paint()
+      ..color = const Color(0xFFFFEB3B)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5
+      ..strokeJoin = StrokeJoin.round
+      ..strokeCap = StrokeCap.round;
+
+    for (final pad in map.props) {
+      if (pad.type != PropType.boostPad) continue;
+      Offset pt(double along, double across) => Offset(
+            pad.position.x + pad.tangent.x * along + pad.normal.x * across,
+            pad.position.y + pad.tangent.y * along + pad.normal.y * across,
+          );
+
+      final rect = Path()
+        ..moveTo(pt(-len / 2, -width / 2).dx, pt(-len / 2, -width / 2).dy)
+        ..lineTo(pt(len / 2, -width / 2).dx, pt(len / 2, -width / 2).dy)
+        ..lineTo(pt(len / 2, width / 2).dx, pt(len / 2, width / 2).dy)
+        ..lineTo(pt(-len / 2, width / 2).dx, pt(-len / 2, width / 2).dy)
+        ..close();
+      canvas.drawPath(rect, base);
+
+      for (var i = -1; i <= 1; i++) {
+        final a = i * 18.0;
+        final arrow = Path()
+          ..moveTo(pt(a - 8, -width * 0.3).dx, pt(a - 8, -width * 0.3).dy)
+          ..lineTo(pt(a + 8, 0).dx, pt(a + 8, 0).dy)
+          ..lineTo(pt(a - 8, width * 0.3).dx, pt(a - 8, width * 0.3).dy);
+        canvas.drawPath(arrow, chevron);
+      }
     }
   }
 

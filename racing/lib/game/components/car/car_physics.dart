@@ -33,10 +33,23 @@ class CarPhysics {
   double lateralSpeed = 0;
   SurfaceType surface = SurfaceType.asphalt;
 
+  /// Seconds of boost-pad boost left.
+  double boostTime = 0;
+
+  /// Greater than 0 for a short time after touching a wall.
+  double wallContact = 0;
+
+  /// Last known centerline index; speeds up track queries.
+  int trackHint = -1;
+
   bool _nitroLocked = false;
   double _nitroDelay = 0;
 
+  double get mass => stats.mass;
   double get speed => velocity.length;
+
+  /// True while nitro or a boost pad is pushing the car.
+  bool get boostActive => nitroActive || boostTime > 0;
   bool get isDrifting =>
       lateralSpeed.abs() > GameConfig.driftThreshold && speed > 80;
 
@@ -52,12 +65,31 @@ class CarPhysics {
     lateralSpeed = 0;
     _nitroLocked = false;
     _nitroDelay = 0;
+    boostTime = 0;
+    wallContact = 0;
+    trackHint = -1;
+  }
+
+  /// Boost pad: extra push for [seconds] plus an instant speed kick.
+  void applyBoost(double seconds, double kick) {
+    boostTime = math.max(boostTime, seconds);
+    velocity.x += math.cos(heading) * kick;
+    velocity.y += math.sin(heading) * kick;
+  }
+
+  /// Nitro pickup: refills the meter (0..1 scale).
+  void addNitro(double amount) {
+    nitro = math.min(1, nitro + amount);
+    if (_nitroLocked && nitro >= GameConfig.nitroUnlockLevel) {
+      _nitroLocked = false;
+    }
   }
 
   void step(double dt, DriveInput input, SurfaceType surf) {
     if (dt <= 0) return;
     surface = surf;
     final s = stats;
+    wallContact = math.max(0, wallContact - dt);
 
     // ---- Steering smoothing (digital buttons -> smooth analog) -------------
     final target = clampD(input.steer, -1, 1);
@@ -87,6 +119,10 @@ class CarPhysics {
         _nitroLocked = false;
       }
     }
+
+    final boosting = boostTime > 0;
+    if (boosting) boostTime = math.max(0, boostTime - dt);
+    final boosted = nitroActive || boosting;
 
     // ---- Heading (uses speed along the OLD heading) -------------------------
     var fx = math.cos(heading);
@@ -120,9 +156,12 @@ class CarPhysics {
     // ---- Engine, brake, reverse --------------------------------------------
     final topSpeed = s.maxSpeed *
         surf.speed *
-        (nitroActive ? GameConfig.nitroTopSpeedBoost : 1.0);
-    final accel = s.acceleration * (nitroActive ? s.nitroPower : 1.0);
-    final throttle = nitroActive ? 1.0 : clampD(input.throttle, 0, 1);
+        (boosted ? GameConfig.nitroTopSpeedBoost : 1.0);
+    final accelMultiplier = nitroActive
+        ? s.nitroPower
+        : (boosting ? GameConfig.padBoostPower : 1.0);
+    final accel = s.acceleration * accelMultiplier;
+    final throttle = boosted ? 1.0 : clampD(input.throttle, 0, 1);
     final brake = clampD(input.brake, 0, 1);
     final traction = 0.35 + 0.65 * clampD(surf.grip, 0, 1);
 

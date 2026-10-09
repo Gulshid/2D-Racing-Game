@@ -66,10 +66,10 @@ class _TuningOverlayState extends State<TuningOverlay> {
       child: Align(
         alignment: Alignment.topCenter,
         child: Padding(
-          padding: const EdgeInsets.only(top: 6),
+          padding: const EdgeInsets.only(top: 78),
           child: Container(
             width: 320,
-            constraints: const BoxConstraints(maxHeight: 210),
+            constraints: const BoxConstraints(maxHeight: 200),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: const Color(0xDD0B1F3A),

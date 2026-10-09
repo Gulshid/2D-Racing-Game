@@ -75,3 +75,25 @@ class InputController implements DriveInput {
     keyboard.reset();
   }
 }
+
+/// Used while the car must not move (countdown). Does nothing.
+class IdleInput implements DriveInput {
+  const IdleInput();
+
+  static const IdleInput instance = IdleInput();
+
+  @override
+  double get steer => 0;
+
+  @override
+  double get throttle => 0;
+
+  @override
+  double get brake => 0;
+
+  @override
+  bool get handbrake => false;
+
+  @override
+  bool get nitro => false;
+}

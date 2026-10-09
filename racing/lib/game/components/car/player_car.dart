@@ -7,6 +7,7 @@ import 'package:racing/game/components/car/car_physics.dart';
 import 'package:racing/game/components/track/track_map.dart';
 import 'package:racing/game/racing_game.dart';
 import 'package:racing/game/systems/fixed_update.dart';
+import 'package:racing/game/systems/input_controller.dart';
 
 /// The player's car: runs [CarPhysics] at a fixed rate and draws the car.
 /// The car is drawn facing +x (right); the component rotates by heading.
@@ -25,7 +26,8 @@ class PlayerCar extends PositionComponent
 
   /// Latest track info under the car (surface, progress, lateral position).
   TrackQuery? lastQuery;
-  int _hint = -1;
+
+  double _stuckTimer = 0;
 
   final Paint _body;
   final Paint _shadow = Paint()..color = const Color(0x55000000);
@@ -51,16 +53,38 @@ class PlayerCar extends PositionComponent
     physics.reset(pos, heading);
     position.setFrom(pos);
     angle = heading;
-    _hint = -1;
     lastQuery = null;
+    _stuckTimer = 0;
   }
 
   @override
   void fixedUpdate(double dt) {
-    final q = game.track.query(physics.position, hint: _hint);
-    _hint = q.index;
+    final q = game.track.query(physics.position, hint: physics.trackHint);
+    physics.trackHint = q.index;
     lastQuery = q;
-    physics.step(dt, game.input, q.surface);
+
+    // Controls are locked during the countdown.
+    final DriveInput drive =
+        game.race.canDrive ? game.input : IdleInput.instance;
+    physics.step(dt, drive, q.surface);
+
+    _checkStuck(dt, drive);
+  }
+
+  /// Respawns the car if it is pinned against a wall for a few seconds.
+  void _checkStuck(double dt, DriveInput drive) {
+    final wantsToMove = drive.throttle > 0 || drive.brake > 0;
+    if (physics.wallContact > 0 &&
+        physics.speed < GameConfig.stuckSpeed &&
+        wantsToMove) {
+      _stuckTimer += dt;
+    } else {
+      _stuckTimer = _stuckTimer > dt ? _stuckTimer - dt : 0;
+    }
+    if (_stuckTimer >= GameConfig.stuckTime) {
+      _stuckTimer = 0;
+      game.respawnPlayer();
+    }
   }
 
   @override
@@ -74,8 +98,8 @@ class PlayerCar extends PositionComponent
     final w = size.x;
     final h = size.y;
 
-    // Nitro flame behind the car.
-    if (physics.nitroActive) {
+    // Flame behind the car while nitro or a boost pad is pushing.
+    if (physics.boostActive) {
       final flame = Path()
         ..moveTo(0, h * 0.28)
         ..lineTo(-22, h * 0.5)
@@ -120,7 +144,7 @@ class PlayerCar extends PositionComponent
         ),
         _glass,
       )
-      // Headlights and tail lights
+      // Headlights
       ..drawRect(Rect.fromLTWH(w - 5, 3, 4, 6), _head)
       ..drawRect(Rect.fromLTWH(w - 5, h - 9, 4, 6), _head);
     final tail = physics.braking ? _brakeLight : _tail;
