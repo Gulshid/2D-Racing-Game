@@ -19,7 +19,12 @@ import 'package:racing/game/components/car/car_physics.dart';
 import 'package:racing/game/components/car/ghost_car.dart';
 import 'package:racing/game/components/car/player_car.dart';
 import 'package:racing/game/components/effects/ai_debug_overlay.dart';
+import 'package:racing/game/components/effects/effects_views.dart';
 import 'package:racing/game/components/effects/spark_emitter.dart';
+import 'package:racing/game/audio/audio_service.dart';
+import 'package:racing/game/effects/effects_system.dart';
+import 'package:racing/core/utils/math_utils.dart';
+import 'package:racing/data/models/app_settings.dart';
 import 'package:racing/game/components/props/cone_component.dart';
 import 'package:racing/game/components/props/pickup_component.dart';
 import 'package:racing/game/components/track/track_component.dart';
@@ -42,8 +47,11 @@ class RacingGame extends FlameGame with KeyboardEvents {
   RacingGame({
     required this.trackData,
     required this.carStats,
+    required this.audio,
     this.difficulty = AiDifficulty.medium,
     this.aiCount = GameConfig.aiDefaultOpponents,
+    this.quality = GraphicsQuality.high,
+    this.haptics = true,
   });
 
   static const String hudOverlay = 'hud';
@@ -59,12 +67,34 @@ class RacingGame extends FlameGame with KeyboardEvents {
   final AiDifficulty difficulty;
   final int aiCount;
 
+  /// Sound playback (shared across the app, owned by the provider).
+  final AudioService audio;
+
+  /// Graphics preset: scales particles, marks, shadows and screen effects.
+  final GraphicsQuality quality;
+
+  /// Vibration on impacts (from the settings screen).
+  final bool haptics;
+
   // These are created lazily so overlays can read them at any time.
   late final TrackMap track = TrackMap(trackData);
   late final PlayerCar car = PlayerCar(stats: carStats);
   late final CameraController cameraController =
       CameraController(target: car);
   late final SparkEmitter sparks = SparkEmitter();
+
+  // ---- Effects (Phase 9) -----------------------------------------------------
+  late final EffectsSystem effects =
+      EffectsSystem(quality: quality, cars: allPhysics);
+  late final GroundEffectsView groundFx = GroundEffectsView(effects);
+  late final ParticleEffectsView particleFx = ParticleEffectsView(effects);
+  late final ScreenEffects screenFx = ScreenEffects(quality: quality);
+  double _audioClock = 0;
+  double _lastEngineTick = -1;
+  RaceState _lastRaceState = RaceState.idle;
+  String _lastLabel = '';
+  bool _lastBoost = false;
+  bool _finalLapMusic = false;
   late final GhostCar ghost = GhostCar();
   late final RaceCarState playerState =
       RaceCarState(id: 'player', name: carStats.name, isPlayer: true);
@@ -167,6 +197,9 @@ class RacingGame extends FlameGame with KeyboardEvents {
     await world.addAll(aiCars);
     await world.add(car);
     await world.add(sparks);
+    await world.add(groundFx);
+    await world.add(particleFx);
+    camera.viewport.add(screenFx);
     await world.add(AiDebugOverlay());
     await world.add(cameraController);
 
@@ -183,28 +216,47 @@ class RacingGame extends FlameGame with KeyboardEvents {
       pickups: _pickups,
       player: car.physics,
     );
-    feedback = ImpactFeedback(camera: cameraController, sparks: sparks);
+    feedback = ImpactFeedback(
+      camera: cameraController,
+      sparks: sparks,
+      haptics: haptics,
+    );
 
     bool isPlayer(Object c) => identical(c, car.physics);
 
     collisions.onWall = (c, point, normal, impact, slide) {
       feedback.wall(point, normal, impact, slide, isPlayer: isPlayer(c));
+      if (isPlayer(c) && impact > 40) {
+        audio.playSfx(
+          Sfx.impactWall,
+          volume: clampD(impact / 420, 0.2, 1),
+          rate: audio.jitter(),
+        );
+      }
     };
     collisions.onCarHit = (a, b, point, impact) {
-      feedback.carHit(
-        point,
-        impact,
-        involvesPlayer: isPlayer(a) || isPlayer(b),
-      );
+      final involved = isPlayer(a) || isPlayer(b);
+      feedback.carHit(point, impact, involvesPlayer: involved);
+      if (involved && impact > 30) {
+        audio.playSfx(
+          Sfx.impactCar,
+          volume: clampD(impact / 380, 0.2, 1),
+          rate: audio.jitter(),
+        );
+      }
     };
     collisions.onPickup = (c, type) {
       if (isPlayer(c)) {
         if (type == PropType.coin) playerState.coins++;
         feedback.light();
+        audio.playSfx(Sfx.pickup, volume: 0.8);
       }
     };
     collisions.onConeHit = (c) {
-      if (isPlayer(c)) feedback.light();
+      if (isPlayer(c)) {
+        feedback.light();
+        audio.playSfx(Sfx.impactWall, volume: 0.35, rate: 1.4);
+      }
     };
     collisions.onBoostPad = (c) {
       if (isPlayer(c)) {
@@ -311,6 +363,14 @@ class RacingGame extends FlameGame with KeyboardEvents {
       ..add(controlsOverlay);
 
     race.startCountdown();
+    effects.clear();
+    audio.startRaceAudio();
+    audio.playMusic(Music.race);
+    audio.setMusicRate(1);
+    _lastRaceState = RaceState.idle;
+    _lastLabel = '';
+    _lastBoost = false;
+    _finalLapMusic = false;
   }
 
   /// Puts the player back on the road at the last checkpoint.
@@ -350,6 +410,9 @@ class RacingGame extends FlameGame with KeyboardEvents {
       standings: _standings(),
     );
 
+    audio.stopRaceAudio();
+    audio.playSfx(Sfx.goBeep, volume: 0.6);
+    audio.setMusicRate(1);
     input.reset();
     overlays
       ..remove(hudOverlay)
@@ -411,6 +474,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
 
     super.update(dt);
     feedback.tick(dt);
+    _updateAudio(dt);
 
     // Record the lap for the ghost car.
     if (race.state == RaceState.racing &&
@@ -428,6 +492,76 @@ class RacingGame extends FlameGame with KeyboardEvents {
     if (++_frame % 20 == 0) aiCostMs.value = aiProfiler.averageMs;
 
     _updateHud();
+  }
+
+  // ---- Audio and effects per frame (Phase 9) ---------------------------------
+
+  double _rateBase(CarStats s) => clampD(s.maxSpeed / 520, 0.85, 1.2);
+
+  void _updateAudio(double dt) {
+    _audioClock += dt;
+    final p = car.physics;
+    final speed01 = clampD(p.speed / carStats.maxSpeed, 0, 1);
+
+    // Countdown beeps, then the GO beep as the race starts.
+    final label = race.countdownLabel;
+    if (race.state == RaceState.countdown &&
+        label != _lastLabel &&
+        label.isNotEmpty) {
+      audio.playSfx(Sfx.countdownBeep, volume: 0.9);
+    }
+    _lastLabel = label;
+    if (race.state == RaceState.racing &&
+        _lastRaceState == RaceState.countdown) {
+      audio.playSfx(Sfx.goBeep, volume: 0.9);
+    }
+    _lastRaceState = race.state;
+
+    // Music speeds up slightly on the final lap.
+    if (!_finalLapMusic &&
+        race.state == RaceState.racing &&
+        race.displayLap(playerState) >= trackData.laps) {
+      _finalLapMusic = true;
+      audio.setMusicRate(1.06);
+    }
+
+    // Nitro or boost pad: whoosh on the moment it starts.
+    final boost = p.boostActive;
+    if (boost && !_lastBoost && race.state == RaceState.racing) {
+      audio.playSfx(Sfx.nitro, volume: 0.7, rate: audio.jitter());
+    }
+    _lastBoost = boost;
+
+    // Engines and tyre squeal, refreshed ten times a second.
+    if (_audioClock - _lastEngineTick >= 0.1) {
+      _lastEngineTick = _audioClock;
+      final playerMix = EngineMix(
+        clampD(0.2 + 0.55 * speed01, 0, 0.8),
+        (0.75 + 0.8 * speed01) * _rateBase(carStats),
+      );
+      final near = List<AiCar>.of(aiCars)
+        ..sort((a, b) => a.physics.position
+            .distanceTo(p.position)
+            .compareTo(b.physics.position.distanceTo(p.position)));
+      final others = <EngineMix>[];
+      for (final ai in near.take(2)) {
+        final attenuation =
+            clampD(1 - ai.physics.position.distanceTo(p.position) / 1400, 0, 1);
+        if (attenuation <= 0.02) continue;
+        final s = clampD(ai.physics.speed / ai.profile.stats.maxSpeed, 0, 1);
+        others.add(EngineMix(
+          attenuation * (0.15 + 0.4 * s),
+          (0.75 + 0.8 * s) * _rateBase(ai.profile.stats),
+        ));
+      }
+      audio.updateEngines(playerMix, others);
+      final slide =
+          clampD((p.lateralSpeed.abs() - GameConfig.driftThreshold) / 220, 0, 1);
+      audio.updateScreech(slide * 0.85);
+    }
+
+    effects.update(dt);
+    screenFx.setLevels(speed01: speed01, nitro: boost);
   }
 
   void _updateHud() {
@@ -497,6 +631,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
   void pauseGame() {
     race.pause();
     pauseEngine();
+    audio.setGamePaused(true);
     input.reset();
     overlays
       ..remove(hudOverlay)
@@ -516,5 +651,6 @@ class RacingGame extends FlameGame with KeyboardEvents {
     _stepper.reset();
     race.resume();
     resumeEngine();
+    audio.setGamePaused(false);
   }
 }
