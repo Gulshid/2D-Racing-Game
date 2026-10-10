@@ -219,7 +219,7 @@ class EffectsSystem {
 
   static const double _farDistance = 1400;
 
-  final EffectsBudget budget;
+  EffectsBudget budget;
 
   /// Every car on the track. cars[0] is the player.
   final List<CarPhysics> cars;
@@ -227,6 +227,12 @@ class EffectsSystem {
   final ParticlePool particles;
   final List<_CarFx> _fx;
   final math.Random _rnd = math.Random(11);
+
+  /// Lowers (or sets) the effect budget during a race. The pools keep their
+  /// size, so this costs nothing beyond the next frame's emission rate.
+  void setQuality(GraphicsQuality q) {
+    budget = EffectsBudget.of(q);
+  }
 
   /// Removes all effects (used on restart).
   void clear() {

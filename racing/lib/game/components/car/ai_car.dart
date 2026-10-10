@@ -99,5 +99,9 @@ class AiCar extends PositionComponent
   }
 
   @override
-  void render(Canvas canvas) => _painter.paint(canvas, size, physics);
+  void render(Canvas canvas) {
+    // Skip drawing cars far outside the view. Physics still runs for them.
+    if (!game.isNearPlayer(physics.position.x, physics.position.y)) return;
+    _painter.paint(canvas, size, physics);
+  }
 }

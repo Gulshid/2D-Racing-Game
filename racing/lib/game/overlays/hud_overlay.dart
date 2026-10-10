@@ -94,6 +94,8 @@ class _TopButtons extends StatelessWidget {
         if (kDebugMode) ...[
           _AiCostChip(game: game),
           const SizedBox(width: 6),
+          _PerfChip(game: game),
+          const SizedBox(width: 6),
           IconButton.filledTonal(
             tooltip: l10n.aiDebugTooltip,
             onPressed: game.toggleAiDebug,
@@ -423,4 +425,33 @@ class _GaugePainter extends CustomPainter {
   @override
   bool shouldRepaint(_GaugePainter old) =>
       old.fraction != fraction || old.fill != fill || old.track != track;
+}
+
+/// Debug only: frame rate and p95 frame time. Tap to start or stop a 30-second
+/// test run; the report is printed to the console with the "PERF" prefix.
+class _PerfChip extends StatelessWidget {
+  const _PerfChip({required this.game});
+
+  final RacingGame game;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double>(
+      valueListenable: game.aiCostMs,
+      builder: (context, _, __) {
+        final s = game.frames.snapshot();
+        return GestureDetector(
+          onTap: game.togglePerfSession,
+          child: HudPanel(
+            child: Text(
+              '${s.fps.toStringAsFixed(0)} FPS  '
+              'p95 ${s.p95Ms.toStringAsFixed(1)} ms  '
+              '${game.perf.isRecording ? 'REC' : 'PERF'}',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

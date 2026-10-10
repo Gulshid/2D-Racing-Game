@@ -22,7 +22,11 @@ import 'package:racing/game/components/car/player_car.dart';
 import 'package:racing/game/components/effects/ai_debug_overlay.dart';
 import 'package:racing/game/components/effects/effects_views.dart';
 import 'package:racing/game/components/effects/spark_emitter.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:racing/game/audio/audio_service.dart';
+import 'package:racing/game/performance/adaptive_quality.dart';
+import 'package:racing/game/performance/frame_monitor.dart';
+import 'package:racing/game/performance/perf_session.dart';
 import 'package:racing/game/effects/effects_system.dart';
 import 'package:racing/core/utils/math_utils.dart';
 import 'package:racing/data/models/app_settings.dart';
@@ -76,6 +80,19 @@ class RacingGame extends FlameGame with KeyboardEvents {
 
   /// Vibration on impacts (from the settings screen).
   final bool haptics;
+
+  // ---- Performance (Phase 11) ------------------------------------------------
+  /// Real frame times from Flutter's frame timings.
+  final FrameMonitor frames = FrameMonitor();
+
+  /// Timed test run that writes a PERF report to the console.
+  final PerfSession perf = PerfSession();
+
+  /// Steps graphics quality down when frames run slow.
+  late final AdaptiveQuality adaptive = AdaptiveQuality(start: quality);
+
+  /// Quality in use right now (can be lower than the setting after adaptation).
+  late GraphicsQuality _level = quality;
 
   // These are created lazily so overlays can read them at any time.
   late final TrackMap track = TrackMap(trackData);
@@ -178,6 +195,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
 
   @override
   Future<void> onLoad() async {
+    frames.attach();
     debugMode = GameConfig.debugOverlays;
     await _preloadAssets();
 
@@ -501,6 +519,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
     super.update(dt);
     feedback.tick(dt);
     _updateAudio(dt);
+    _tickPerformance(dt);
 
     // Record the lap for the ghost car.
     if (race.state == RaceState.racing &&
@@ -517,7 +536,60 @@ class RacingGame extends FlameGame with KeyboardEvents {
     aiProfiler.endFrame();
     if (++_frame % 20 == 0) aiCostMs.value = aiProfiler.averageMs;
 
-    _updateHud();
+    // The HUD and minimap do not need 60 updates a second; 30 looks the same
+    // and halves the Flutter rebuild cost during a race.
+    if (_frame.isEven) _updateHud();
+  }
+
+  // ---- Performance (Phase 11) ----------------------------------------------
+
+  /// Runs once per frame: adaptive quality, and the timed test run if active.
+  void _tickPerformance(double dt) {
+    final next = adaptive.onFrame(dt);
+    if (next != null && next != _level) {
+      _level = next;
+      effects.setQuality(next);
+      screenFx.setQuality(next);
+      perf.noteQualityChange(next);
+    }
+    final report = perf.tick(
+      dt: dt,
+      aiMs: aiProfiler.averageMs,
+      quality: _level,
+    );
+    if (report != null) debugPrint(report);
+  }
+
+  /// Starts a 30-second timed test run, or stops it early. The report goes to
+  /// the console with the "PERF" prefix.
+  void togglePerfSession() {
+    if (perf.isRecording) {
+      final report = perf.stop();
+      if (report != null) debugPrint(report);
+      return;
+    }
+    perf.start(label: trackData.id, quality: _level, frames: frames);
+  }
+
+  /// True when a world position is close enough to the player to be drawn.
+  /// Radius = half the screen diagonal in world units, plus a margin, so
+  /// nothing visible is ever skipped.
+  bool isNearPlayer(double x, double y) {
+    final p = car.physics.position;
+    final dx = x - p.x;
+    final dy = y - p.y;
+    final zoom = math.max(0.01, camera.viewfinder.zoom);
+    final radius = size.length / (2 * zoom) + 300;
+    return dx * dx + dy * dy <= radius * radius;
+  }
+
+  @override
+  void onRemove() {
+    frames.detach();
+    perf.stop();
+    audio.stopRaceAudio();
+    effects.clear();
+    super.onRemove();
   }
 
   // ---- Audio and effects per frame (Phase 9) ---------------------------------
@@ -620,11 +692,12 @@ class RacingGame extends FlameGame with KeyboardEvents {
     );
     if (nextRace != raceHud.value) raceHud.value = nextRace;
 
-    timing.value = RaceTiming(
+    final nextTiming = RaceTiming(
       lapTime: playerState.currentLapTime,
       bestLap: playerState.bestLap,
       totalTime: race.raceTime,
     );
+    if (nextTiming != timing.value) timing.value = nextTiming;
 
     minimapTick.value++;
   }
