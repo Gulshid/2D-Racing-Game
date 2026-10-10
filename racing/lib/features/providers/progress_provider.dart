@@ -9,7 +9,6 @@ import 'package:racing/data/models/race_result.dart';
 import 'package:racing/data/models/save_data.dart';
 import 'package:racing/data/repositories/save_repository.dart';
 import 'package:racing/features/providers/settings_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /// What a finished race added to the player's progress. Shown on the
 /// results screen.

@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flame/extensions.dart';
 import 'package:racing/core/constants/game_config.dart';
 import 'package:racing/core/utils/math_utils.dart';
-import 'package:racing/data/models/surface_type.dart';
 import 'package:racing/game/components/track/track_map.dart';
 
 /// Target speed for every point on the racing line.

@@ -50,6 +50,8 @@ class _RaceScreenState extends ConsumerState<RaceScreen>
       audio: ref.read(audioServiceProvider),
       quality: ref.read(settingsProvider).graphicsQuality,
       haptics: ref.read(settingsProvider).haptics,
+      controlScheme: ref.read(settingsProvider).controlScheme,
+      steerSensitivity: ref.read(settingsProvider).steeringSensitivity,
     );
     WidgetsBinding.instance.addObserver(this);
     _game.result.addListener(_onResult);

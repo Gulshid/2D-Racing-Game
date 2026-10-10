@@ -43,6 +43,7 @@ import 'package:racing/game/systems/ghost_recorder.dart';
 import 'package:racing/game/systems/hud_state.dart';
 import 'package:racing/game/systems/impact_feedback.dart';
 import 'package:racing/game/systems/input_controller.dart';
+import 'package:racing/game/systems/tilt_steering.dart';
 import 'package:racing/game/systems/minimap_marker.dart';
 import 'package:racing/game/systems/race_hud_state.dart';
 import 'package:racing/game/systems/race_manager.dart';
@@ -57,6 +58,8 @@ class RacingGame extends FlameGame with KeyboardEvents {
     this.aiCount = GameConfig.aiDefaultOpponents,
     this.quality = GraphicsQuality.high,
     this.haptics = true,
+    this.controlScheme = ControlScheme.buttons,
+    this.steerSensitivity = 1.0,
   });
 
   static const String hudOverlay = 'hud';
@@ -81,6 +84,11 @@ class RacingGame extends FlameGame with KeyboardEvents {
   /// Vibration on impacts (from the settings screen).
   final bool haptics;
 
+  /// Driving controls chosen in Settings (buttons or wheel) and steering
+  /// strength (0.5..1.5).
+  final ControlScheme controlScheme;
+  final double steerSensitivity;
+
   // ---- Performance (Phase 11) ------------------------------------------------
   /// Real frame times from Flutter's frame timings.
   final FrameMonitor frames = FrameMonitor();
@@ -93,6 +101,9 @@ class RacingGame extends FlameGame with KeyboardEvents {
 
   /// Quality in use right now (can be lower than the setting after adaptation).
   late GraphicsQuality _level = quality;
+
+  /// Phone tilt steering. Only runs with the Tilt control scheme.
+  final TiltSteering tilt = TiltSteering();
 
   // These are created lazily so overlays can read them at any time.
   late final TrackMap track = TrackMap(trackData);
@@ -196,6 +207,8 @@ class RacingGame extends FlameGame with KeyboardEvents {
   @override
   Future<void> onLoad() async {
     frames.attach();
+    input.sensitivity = steerSensitivity;
+    if (controlScheme == ControlScheme.tilt) tilt.start();
     debugMode = GameConfig.debugOverlays;
     await _preloadAssets();
 
@@ -395,6 +408,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
       ..add(controlsOverlay);
 
     race.startCountdown();
+    tilt.recalibrate();
     effects.clear();
     audio.startRaceAudio();
     audio.playMusic(Music.race);
@@ -520,6 +534,9 @@ class RacingGame extends FlameGame with KeyboardEvents {
     feedback.tick(dt);
     _updateAudio(dt);
     _tickPerformance(dt);
+    if (controlScheme == ControlScheme.tilt) {
+      input.touch.analog = tilt.steer.value;
+    }
 
     // Record the lap for the ghost car.
     if (race.state == RaceState.racing &&
@@ -586,6 +603,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
   @override
   void onRemove() {
     frames.detach();
+    tilt.stop();
     perf.stop();
     audio.stopRaceAudio();
     effects.clear();

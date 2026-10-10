@@ -14,17 +14,21 @@ abstract interface class DriveInput {
   bool get nitro;
 }
 
-/// One physical input source (touch buttons or keyboard).
+/// One physical input source (touch buttons, steering wheel or keyboard).
 class InputSource implements DriveInput {
   bool left = false;
   bool right = false;
+
+  /// Analog steering from the on-screen wheel, -1..1. Zero when unused.
+  double analog = 0;
   bool gas = false;
   bool brakePedal = false;
   bool handbrakeOn = false;
   bool nitroOn = false;
 
   @override
-  double get steer => (right ? 1.0 : 0.0) - (left ? 1.0 : 0.0);
+  double get steer =>
+      clampD((right ? 1.0 : 0.0) - (left ? 1.0 : 0.0) + analog, -1, 1);
 
   @override
   double get throttle => gas ? 1.0 : 0.0;
@@ -41,6 +45,7 @@ class InputSource implements DriveInput {
   void reset() {
     left = false;
     right = false;
+    analog = 0;
     gas = false;
     brakePedal = false;
     handbrakeOn = false;
@@ -53,8 +58,14 @@ class InputController implements DriveInput {
   final InputSource touch = InputSource();
   final InputSource keyboard = InputSource();
 
+  /// Steering strength from the settings screen (0.5..1.5). It scales the
+  /// steering of every control, so 0.5 means half as much turn for the same
+  /// input.
+  double sensitivity = 1.0;
+
   @override
-  double get steer => clampD(touch.steer + keyboard.steer, -1, 1);
+  double get steer =>
+      clampD((touch.steer + keyboard.steer) * sensitivity, -1, 1);
 
   @override
   double get throttle => touch.throttle > keyboard.throttle
