@@ -19,6 +19,7 @@ dependencies:
   intl: 0.20.2
   flutter_localizations:
     sdk: flutter
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -30,6 +31,7 @@ flutter:
   generate: true
 
   assets:
-    - assets/images/
     - assets/audio/
+    - assets/audio/sfx/
+    - assets/audio/music/
     - assets/maps/
