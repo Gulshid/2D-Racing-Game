@@ -9,11 +9,29 @@
   "chooseTrack": "Choose a track",
   "chooseCar": "Choose your car",
   "laps": "{count} laps",
-  "@laps": { "placeholders": { "count": { "type": "int" } } },
+  "@laps": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "parTime": "Par {seconds}s",
-  "@parTime": { "placeholders": { "seconds": { "type": "int" } } },
+  "@parTime": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
   "roadLength": "{km} km of road",
-  "@roadLength": { "placeholders": { "km": { "type": "String" } } },
+  "@roadLength": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "bestLap": "Best lap",
   "bestLapNone": "No record yet",
   "difficultyEasy": "Easy",
@@ -23,7 +41,13 @@
   "opponents": "Opponents",
   "aiCountOne": "1 AI car",
   "aiCountMany": "{count} AI cars",
-  "@aiCountMany": { "placeholders": { "count": { "type": "int" } } },
+  "@aiCountMany": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "paused": "Paused",
   "resume": "Resume",
   "restart": "Restart",
@@ -32,26 +56,83 @@
   "changeTrackCar": "Track / car",
   "menu": "Menu",
   "placeResult": "{ordinal} place",
-  "@placeResult": { "placeholders": { "ordinal": { "type": "String" } } },
+  "@placeResult": {
+    "placeholders": {
+      "ordinal": {
+        "type": "String"
+      }
+    }
+  },
   "totalTime": "Total time",
   "newRecord": "New record",
   "coins": "Coins",
   "collected": "{count} collected",
-  "@collected": { "placeholders": { "count": { "type": "int" } } },
+  "@collected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "lapNumber": "Lap {number}  {time}",
-  "@lapNumber": { "placeholders": { "number": { "type": "int" }, "time": { "type": "String" } } },
+  "@lapNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "racing": "racing",
   "you": "YOU",
   "hudLap": "LAP {current}/{total}",
-  "@hudLap": { "placeholders": { "current": { "type": "int" }, "total": { "type": "int" } } },
+  "@hudLap": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "hudPos": "POS {position}/{count}",
-  "@hudPos": { "placeholders": { "position": { "type": "int" }, "count": { "type": "int" } } },
+  "@hudPos": {
+    "placeholders": {
+      "position": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "hudCoins": "COINS {count}",
-  "@hudCoins": { "placeholders": { "count": { "type": "int" } } },
+  "@hudCoins": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "hudLapTime": "LAP {time}",
-  "@hudLapTime": { "placeholders": { "time": { "type": "String" } } },
+  "@hudLapTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "hudBest": "BEST {time}",
-  "@hudBest": { "placeholders": { "time": { "type": "String" } } },
+  "@hudBest": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
   "wrongWay": "Wrong way",
   "drift": "DRIFT",
   "nitro": "NITRO",
@@ -90,5 +171,219 @@
   "highContrast": "High contrast",
   "colorblindIndicators": "Extra shape and icon cues",
   "language": "Language",
-  "english": "English"
+  "english": "English",
+  "garage": "Garage",
+  "championship": "Championship",
+  "rewards": "Rewards",
+  "carLocked": "Locked · {cost} coins",
+  "@carLocked": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "unlockFor": "Unlock for {cost}",
+  "@unlockFor": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "selected": "Selected",
+  "lockedLabel": "Locked",
+  "upgrade": "Upgrade",
+  "upgradeEngine": "Engine",
+  "upgradeEngineDesc": "Top speed and acceleration",
+  "upgradeTires": "Tires",
+  "upgradeTiresDesc": "Grip and steering",
+  "upgradeBrakes": "Brakes",
+  "upgradeBrakesDesc": "Braking power",
+  "upgradeNitro": "Nitro",
+  "upgradeNitroDesc": "Longer and stronger boost",
+  "buyFor": "Buy for {cost}",
+  "@buyFor": {
+    "placeholders": {
+      "cost": {
+        "type": "int"
+      }
+    }
+  },
+  "maxLevel": "MAX",
+  "level": "Level {level}",
+  "@level": {
+    "placeholders": {
+      "level": {
+        "type": "int"
+      }
+    }
+  },
+  "roundLabel": "Round {number}",
+  "@roundLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "roundDone": "Done",
+  "roundNext": "Next",
+  "roundUpcoming": "Upcoming",
+  "standings": "Standings",
+  "points": "{points} pts",
+  "@points": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "noStandings": "Points appear after the first round.",
+  "championshipLocked": "Unlock every championship track to start the season.",
+  "raceRound": "Race round {number}",
+  "@raceRound": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "newSeason": "Start new season",
+  "seasonComplete": "Season complete",
+  "seasonChampion": "Champion!",
+  "dailyReward": "Daily reward",
+  "dailyRewardReady": "Claim your login reward",
+  "dailyRewardDone": "Come back tomorrow for more",
+  "dailyStreak": "Day {streak} streak",
+  "@dailyStreak": {
+    "placeholders": {
+      "streak": {
+        "type": "int"
+      }
+    }
+  },
+  "claim": "Claim",
+  "claimed": "Claimed",
+  "dailyChallenge": "Daily challenge",
+  "challengeDrifts": "Drift {target} times today",
+  "@challengeDrifts": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "challengeCleanLaps": "Drive {target} clean laps today",
+  "@challengeCleanLaps": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "challengeFinishes": "Finish {target} races today",
+  "@challengeFinishes": {
+    "placeholders": {
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "progressOf": "{value} / {target}",
+  "@progressOf": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "achievements": "Achievements",
+  "achFirstWin": "First win",
+  "achFirstWinDesc": "Win a race",
+  "achPodium": "Podium",
+  "achPodiumDesc": "Finish in the top three",
+  "achDrifter": "Drift king",
+  "achDrifterDesc": "Drift 10 times in one race",
+  "achPerfectLap": "Perfect lap",
+  "achPerfectLapDesc": "Finish a lap without hitting anything",
+  "achRacer10": "Veteran",
+  "achRacer10Desc": "Race 10 times",
+  "achChampion": "Champion",
+  "achChampionDesc": "Win a championship season",
+  "statsRaces": "Races",
+  "statsWins": "Wins",
+  "statsPodiums": "Podiums",
+  "statsDrifts": "Drifts",
+  "statsCleanLaps": "Clean laps",
+  "statsCoinsEarned": "Coins earned",
+  "rewardPosition": "Position +{amount}",
+  "@rewardPosition": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardCoins": "Coins +{amount}",
+  "@rewardCoins": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardCleanLaps": "Clean laps +{amount}",
+  "@rewardCleanLaps": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardDrifts": "Drifts +{amount}",
+  "@rewardDrifts": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardAchievements": "Achievements +{amount}",
+  "@rewardAchievements": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardSeason": "Season bonus +{amount}",
+  "@rewardSeason": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "rewardTotal": "Total +{amount}",
+  "@rewardTotal": {
+    "placeholders": {
+      "amount": {
+        "type": "int"
+      }
+    }
+  },
+  "champPoints": "Championship +{points} pts",
+  "@champPoints": {
+    "placeholders": {
+      "points": {
+        "type": "int"
+      }
+    }
+  },
+  "achievementUnlocked": "Achievement unlocked",
+  "dailyChallengeDone": "Daily challenge complete!"
 }

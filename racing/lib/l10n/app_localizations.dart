@@ -567,6 +567,432 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get english;
+
+  /// No description provided for @garage.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage'**
+  String get garage;
+
+  /// No description provided for @championship.
+  ///
+  /// In en, this message translates to:
+  /// **'Championship'**
+  String get championship;
+
+  /// No description provided for @rewards.
+  ///
+  /// In en, this message translates to:
+  /// **'Rewards'**
+  String get rewards;
+
+  /// No description provided for @carLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked · {cost} coins'**
+  String carLocked(int cost);
+
+  /// No description provided for @unlockFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock for {cost}'**
+  String unlockFor(int cost);
+
+  /// No description provided for @selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected'**
+  String get selected;
+
+  /// No description provided for @lockedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked'**
+  String get lockedLabel;
+
+  /// No description provided for @upgrade.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade'**
+  String get upgrade;
+
+  /// No description provided for @upgradeEngine.
+  ///
+  /// In en, this message translates to:
+  /// **'Engine'**
+  String get upgradeEngine;
+
+  /// No description provided for @upgradeEngineDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Top speed and acceleration'**
+  String get upgradeEngineDesc;
+
+  /// No description provided for @upgradeTires.
+  ///
+  /// In en, this message translates to:
+  /// **'Tires'**
+  String get upgradeTires;
+
+  /// No description provided for @upgradeTiresDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Grip and steering'**
+  String get upgradeTiresDesc;
+
+  /// No description provided for @upgradeBrakes.
+  ///
+  /// In en, this message translates to:
+  /// **'Brakes'**
+  String get upgradeBrakes;
+
+  /// No description provided for @upgradeBrakesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Braking power'**
+  String get upgradeBrakesDesc;
+
+  /// No description provided for @upgradeNitro.
+  ///
+  /// In en, this message translates to:
+  /// **'Nitro'**
+  String get upgradeNitro;
+
+  /// No description provided for @upgradeNitroDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Longer and stronger boost'**
+  String get upgradeNitroDesc;
+
+  /// No description provided for @buyFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy for {cost}'**
+  String buyFor(int cost);
+
+  /// No description provided for @maxLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'MAX'**
+  String get maxLevel;
+
+  /// No description provided for @level.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level}'**
+  String level(int level);
+
+  /// No description provided for @roundLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Round {number}'**
+  String roundLabel(int number);
+
+  /// No description provided for @roundDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get roundDone;
+
+  /// No description provided for @roundNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get roundNext;
+
+  /// No description provided for @roundUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get roundUpcoming;
+
+  /// No description provided for @standings.
+  ///
+  /// In en, this message translates to:
+  /// **'Standings'**
+  String get standings;
+
+  /// No description provided for @points.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pts'**
+  String points(int points);
+
+  /// No description provided for @noStandings.
+  ///
+  /// In en, this message translates to:
+  /// **'Points appear after the first round.'**
+  String get noStandings;
+
+  /// No description provided for @championshipLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock every championship track to start the season.'**
+  String get championshipLocked;
+
+  /// No description provided for @raceRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Race round {number}'**
+  String raceRound(int number);
+
+  /// No description provided for @newSeason.
+  ///
+  /// In en, this message translates to:
+  /// **'Start new season'**
+  String get newSeason;
+
+  /// No description provided for @seasonComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Season complete'**
+  String get seasonComplete;
+
+  /// No description provided for @seasonChampion.
+  ///
+  /// In en, this message translates to:
+  /// **'Champion!'**
+  String get seasonChampion;
+
+  /// No description provided for @dailyReward.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily reward'**
+  String get dailyReward;
+
+  /// No description provided for @dailyRewardReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim your login reward'**
+  String get dailyRewardReady;
+
+  /// No description provided for @dailyRewardDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Come back tomorrow for more'**
+  String get dailyRewardDone;
+
+  /// No description provided for @dailyStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {streak} streak'**
+  String dailyStreak(int streak);
+
+  /// No description provided for @claim.
+  ///
+  /// In en, this message translates to:
+  /// **'Claim'**
+  String get claim;
+
+  /// No description provided for @claimed.
+  ///
+  /// In en, this message translates to:
+  /// **'Claimed'**
+  String get claimed;
+
+  /// No description provided for @dailyChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily challenge'**
+  String get dailyChallenge;
+
+  /// No description provided for @challengeDrifts.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift {target} times today'**
+  String challengeDrifts(int target);
+
+  /// No description provided for @challengeCleanLaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Drive {target} clean laps today'**
+  String challengeCleanLaps(int target);
+
+  /// No description provided for @challengeFinishes.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish {target} races today'**
+  String challengeFinishes(int target);
+
+  /// No description provided for @progressOf.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} / {target}'**
+  String progressOf(int value, int target);
+
+  /// No description provided for @achievements.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievements'**
+  String get achievements;
+
+  /// No description provided for @achFirstWin.
+  ///
+  /// In en, this message translates to:
+  /// **'First win'**
+  String get achFirstWin;
+
+  /// No description provided for @achFirstWinDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Win a race'**
+  String get achFirstWinDesc;
+
+  /// No description provided for @achPodium.
+  ///
+  /// In en, this message translates to:
+  /// **'Podium'**
+  String get achPodium;
+
+  /// No description provided for @achPodiumDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish in the top three'**
+  String get achPodiumDesc;
+
+  /// No description provided for @achDrifter.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift king'**
+  String get achDrifter;
+
+  /// No description provided for @achDrifterDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Drift 10 times in one race'**
+  String get achDrifterDesc;
+
+  /// No description provided for @achPerfectLap.
+  ///
+  /// In en, this message translates to:
+  /// **'Perfect lap'**
+  String get achPerfectLap;
+
+  /// No description provided for @achPerfectLapDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish a lap without hitting anything'**
+  String get achPerfectLapDesc;
+
+  /// No description provided for @achRacer10.
+  ///
+  /// In en, this message translates to:
+  /// **'Veteran'**
+  String get achRacer10;
+
+  /// No description provided for @achRacer10Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Race 10 times'**
+  String get achRacer10Desc;
+
+  /// No description provided for @achChampion.
+  ///
+  /// In en, this message translates to:
+  /// **'Champion'**
+  String get achChampion;
+
+  /// No description provided for @achChampionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Win a championship season'**
+  String get achChampionDesc;
+
+  /// No description provided for @statsRaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Races'**
+  String get statsRaces;
+
+  /// No description provided for @statsWins.
+  ///
+  /// In en, this message translates to:
+  /// **'Wins'**
+  String get statsWins;
+
+  /// No description provided for @statsPodiums.
+  ///
+  /// In en, this message translates to:
+  /// **'Podiums'**
+  String get statsPodiums;
+
+  /// No description provided for @statsDrifts.
+  ///
+  /// In en, this message translates to:
+  /// **'Drifts'**
+  String get statsDrifts;
+
+  /// No description provided for @statsCleanLaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean laps'**
+  String get statsCleanLaps;
+
+  /// No description provided for @statsCoinsEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'Coins earned'**
+  String get statsCoinsEarned;
+
+  /// No description provided for @rewardPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Position +{amount}'**
+  String rewardPosition(int amount);
+
+  /// No description provided for @rewardCoins.
+  ///
+  /// In en, this message translates to:
+  /// **'Coins +{amount}'**
+  String rewardCoins(int amount);
+
+  /// No description provided for @rewardCleanLaps.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean laps +{amount}'**
+  String rewardCleanLaps(int amount);
+
+  /// No description provided for @rewardDrifts.
+  ///
+  /// In en, this message translates to:
+  /// **'Drifts +{amount}'**
+  String rewardDrifts(int amount);
+
+  /// No description provided for @rewardAchievements.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievements +{amount}'**
+  String rewardAchievements(int amount);
+
+  /// No description provided for @rewardSeason.
+  ///
+  /// In en, this message translates to:
+  /// **'Season bonus +{amount}'**
+  String rewardSeason(int amount);
+
+  /// No description provided for @rewardTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total +{amount}'**
+  String rewardTotal(int amount);
+
+  /// No description provided for @champPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Championship +{points} pts'**
+  String champPoints(int points);
+
+  /// No description provided for @achievementUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievement unlocked'**
+  String get achievementUnlocked;
+
+  /// No description provided for @dailyChallengeDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily challenge complete!'**
+  String get dailyChallengeDone;
 }
 
 class _AppLocalizationsDelegate

@@ -34,3 +34,24 @@ String textSizeName(AppLocalizations l, TextSize t) => switch (t) {
       TextSize.large => l.textLarge,
       TextSize.extraLarge => l.textExtraLarge,
     };
+
+/// Localized achievement title and description, by achievement id.
+String achievementTitle(AppLocalizations l, String id) => switch (id) {
+      'first_win' => l.achFirstWin,
+      'podium' => l.achPodium,
+      'drifter' => l.achDrifter,
+      'perfect_lap' => l.achPerfectLap,
+      'racer_10' => l.achRacer10,
+      'champion' => l.achChampion,
+      _ => id,
+    };
+
+String achievementDescription(AppLocalizations l, String id) => switch (id) {
+      'first_win' => l.achFirstWinDesc,
+      'podium' => l.achPodiumDesc,
+      'drifter' => l.achDrifterDesc,
+      'perfect_lap' => l.achPerfectLapDesc,
+      'racer_10' => l.achRacer10Desc,
+      'champion' => l.achChampionDesc,
+      _ => '',
+    };

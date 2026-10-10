@@ -5,16 +5,18 @@ import 'package:racing/app/design/app_palette.dart';
 import 'package:racing/app/design/app_widgets.dart';
 import 'package:racing/app/router.dart';
 import 'package:racing/core/utils/time_format.dart';
+import 'package:racing/data/models/progression_config.dart';
 import 'package:racing/data/models/race_records.dart';
 import 'package:racing/data/models/track_data.dart';
 import 'package:racing/data/tracks/track_library.dart';
+import 'package:racing/features/providers/progress_provider.dart';
 import 'package:racing/features/providers/race_setup_provider.dart';
 import 'package:racing/game/components/track/track_map.dart';
 import 'package:racing/game/overlays/minimap.dart';
 import 'package:racing/l10n/app_localizations.dart';
 import 'package:racing/l10n/l10n_names.dart';
 
-/// Pick a track: list on the left, preview and best time on the right.
+/// Pick a track. Locked tracks show a lock and can be unlocked for coins.
 class TrackSelectScreen extends ConsumerStatefulWidget {
   const TrackSelectScreen({super.key});
 
@@ -29,8 +31,14 @@ class _TrackSelectScreenState extends ConsumerState<TrackSelectScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // ignore: unused_local_variable
+    final p = AppPalette.of(context);
     final index = ref.watch(raceSetupProvider.select((s) => s.trackIndex));
+    final progress = ref.watch(progressProvider);
+    final notifier = ref.read(progressProvider.notifier);
     final track = TrackLibrary.all[index];
+    final unlocked = notifier.isTrackUnlocked(track.id);
+    final cost = Economy.trackCostFor(track.id);
     final record = RaceRecords.of(track.id);
 
     return ScreenFrame(
@@ -45,12 +53,17 @@ class _TrackSelectScreenState extends ConsumerState<TrackSelectScreen> {
               itemCount: TrackLibrary.all.length,
               separatorBuilder: (context, i) =>
                   const SizedBox(height: AppSpace.s),
-              itemBuilder: (context, i) => _TrackTile(
-                data: TrackLibrary.all[i],
-                map: _maps[i],
-                selected: i == index,
-                onTap: () => ref.read(raceSetupProvider.notifier).selectTrack(i),
-              ),
+              itemBuilder: (context, i) {
+                final id = TrackLibrary.all[i].id;
+                return _TrackTile(
+                  data: TrackLibrary.all[i],
+                  map: _maps[i],
+                  selected: i == index,
+                  locked: !notifier.isTrackUnlocked(id),
+                  onTap: () =>
+                      ref.read(raceSetupProvider.notifier).selectTrack(i),
+                );
+              },
             ),
           ),
           const SizedBox(width: AppSpace.l),
@@ -61,20 +74,37 @@ class _TrackSelectScreenState extends ConsumerState<TrackSelectScreen> {
                   child: AppCard(
                     semanticLabel: track.name,
                     child: SizedBox.expand(
-                      child: CustomPaint(
-                        painter: MinimapPainter(map: _maps[index]),
+                      child: Opacity(
+                        opacity: unlocked ? 1 : 0.35,
+                        child: CustomPaint(
+                          painter: MinimapPainter(map: _maps[index]),
+                        ),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: AppSpace.m),
-                _Details(track: track, map: _maps[index], bestLap: record.bestLap),
-                const SizedBox(height: AppSpace.m),
-                AppButton(
-                  label: l10n.next,
-                  icon: Icons.arrow_forward,
-                  onPressed: () => context.go(AppRoutes.cars),
+                _Details(
+                  track: track,
+                  map: _maps[index],
+                  bestLap: record.bestLap,
+                  locked: !unlocked,
                 ),
+                const SizedBox(height: AppSpace.m),
+                if (unlocked)
+                  AppButton(
+                    label: l10n.next,
+                    icon: Icons.arrow_forward,
+                    onPressed: () => context.go(AppRoutes.cars),
+                  )
+                else
+                  AppButton(
+                    label: l10n.unlockFor(cost),
+                    icon: Icons.lock_open,
+                    onPressed: progress.save.coins >= cost
+                        ? () => notifier.unlockTrack(track.id)
+                        : null,
+                  ),
               ],
             ),
           ),
@@ -89,12 +119,14 @@ class _TrackTile extends StatelessWidget {
     required this.data,
     required this.map,
     required this.selected,
+    required this.locked,
     required this.onTap,
   });
 
   final TrackData data;
   final TrackMap map;
   final bool selected;
+  final bool locked;
   final VoidCallback onTap;
 
   @override
@@ -110,7 +142,10 @@ class _TrackTile extends StatelessWidget {
           SizedBox(
             width: 84,
             height: 64,
-            child: CustomPaint(painter: MinimapPainter(map: map)),
+            child: Opacity(
+              opacity: locked ? 0.4 : 1,
+              child: CustomPaint(painter: MinimapPainter(map: map)),
+            ),
           ),
           const SizedBox(width: AppSpace.m),
           Expanded(
@@ -120,10 +155,7 @@ class _TrackTile extends StatelessWidget {
               children: [
                 Text(
                   data.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -134,6 +166,7 @@ class _TrackTile extends StatelessWidget {
               ],
             ),
           ),
+          if (locked) const Icon(Icons.lock, size: 18),
         ],
       ),
     );
@@ -145,11 +178,13 @@ class _Details extends StatelessWidget {
     required this.track,
     required this.map,
     required this.bestLap,
+    required this.locked,
   });
 
   final TrackData track;
   final TrackMap map;
   final double? bestLap;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -164,37 +199,31 @@ class _Details extends StatelessWidget {
               runSpacing: AppSpace.xs,
               children: [
                 Text(track.name.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                    )),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
                 Text(l10n.laps(track.laps)),
                 Text(l10n.parTime(track.parTimeSeconds)),
-                Text(l10n.roadLength(
-                  (map.length / 1000).toStringAsFixed(1),
-                )),
+                Text(l10n.roadLength((map.length / 1000).toStringAsFixed(1))),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                l10n.bestLap.toUpperCase(),
-                style: TextStyle(fontSize: 11, letterSpacing: 1.5, color: p.textMuted),
-              ),
-              Text(
-                bestLap == null
-                    ? l10n.bestLapNone
-                    : formatTime(bestLap!),
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: bestLap == null ? p.textMuted : p.gold,
+          if (!locked)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  l10n.bestLap.toUpperCase(),
+                  style: TextStyle(fontSize: 11, letterSpacing: 1.5, color: p.textMuted),
                 ),
-              ),
-            ],
-          ),
+                Text(
+                  bestLap == null ? l10n.bestLapNone : formatTime(bestLap!),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: bestLap == null ? p.textMuted : p.gold,
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

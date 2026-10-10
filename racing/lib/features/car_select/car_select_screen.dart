@@ -7,12 +7,16 @@ import 'package:racing/app/router.dart';
 import 'package:racing/core/constants/game_config.dart';
 import 'package:racing/data/models/ai_profile.dart';
 import 'package:racing/data/models/car_stats.dart';
+import 'package:racing/data/models/progression_config.dart';
 import 'package:racing/data/tracks/track_library.dart';
+import 'package:racing/features/progress/car_stat_bars.dart';
+import 'package:racing/features/providers/progress_provider.dart';
 import 'package:racing/features/providers/race_setup_provider.dart';
 import 'package:racing/l10n/app_localizations.dart';
 import 'package:racing/l10n/l10n_names.dart';
 
-/// Pick a car and the opponents, then start the race.
+/// Pick a car and the opponents, then start the race. Locked cars are bought
+/// in the garage.
 class CarSelectScreen extends ConsumerWidget {
   const CarSelectScreen({super.key});
 
@@ -20,7 +24,10 @@ class CarSelectScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final setup = ref.watch(raceSetupProvider);
+    final progress = ref.watch(progressProvider);
     final notifier = ref.read(raceSetupProvider.notifier);
+    final progressNotifier = ref.read(progressProvider.notifier);
+    final carUnlocked = progressNotifier.isCarUnlocked(setup.carIndex);
 
     return ScreenFrame(
       title: l10n.chooseCar,
@@ -34,11 +41,16 @@ class CarSelectScreen extends ConsumerWidget {
               itemCount: CarPresets.all.length,
               separatorBuilder: (context, i) =>
                   const SizedBox(height: AppSpace.s),
-              itemBuilder: (context, i) => _CarTile(
-                stats: CarPresets.all[i],
-                selected: i == setup.carIndex,
-                onTap: () => notifier.selectCar(i),
-              ),
+              itemBuilder: (context, i) {
+                final unlocked = progressNotifier.isCarUnlocked(i);
+                return _CarTile(
+                  stats: progressNotifier.statsFor(i),
+                  selected: i == setup.carIndex,
+                  locked: !unlocked,
+                  lockCost: Economy.carCostFor(i),
+                  onTap: unlocked ? () => notifier.selectCar(i) : null,
+                );
+              },
             ),
           ),
           const SizedBox(width: AppSpace.l),
@@ -60,14 +72,17 @@ class CarSelectScreen extends ConsumerWidget {
                   AppButton(
                     label: l10n.startRace,
                     icon: Icons.flag,
-                    onPressed: () => context.go(
-                      AppRoutes.raceUrl(
-                        trackId: TrackLibrary.all[setup.trackIndex].id,
-                        carIndex: setup.carIndex,
-                        difficulty: setup.difficulty,
-                        aiCount: setup.opponents,
-                      ),
-                    ),
+                    onPressed: carUnlocked && progress.save.unlockedTracks.contains(
+                            TrackLibrary.all[setup.trackIndex].id)
+                        ? () => context.go(
+                              AppRoutes.raceUrl(
+                                trackId: TrackLibrary.all[setup.trackIndex].id,
+                                carIndex: setup.carIndex,
+                                difficulty: setup.difficulty,
+                                aiCount: setup.opponents,
+                              ),
+                            )
+                        : null,
                   ),
                 ],
               ),
@@ -83,52 +98,66 @@ class _CarTile extends StatelessWidget {
   const _CarTile({
     required this.stats,
     required this.selected,
+    required this.locked,
+    required this.lockCost,
     required this.onTap,
   });
 
   final CarStats stats;
   final bool selected;
-  final VoidCallback onTap;
+  final bool locked;
+  final int lockCost;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final left = [
-      StatBar(label: l10n.statSpeed, value: stats.maxSpeed / 700),
-      StatBar(label: l10n.statAcceleration, value: stats.acceleration / 300),
-      StatBar(label: l10n.statHandling, value: stats.steering / 3.5),
-    ];
-    final right = [
-      StatBar(label: l10n.statGrip, value: stats.grip / 14),
-      StatBar(label: l10n.statBraking, value: stats.braking / 1100),
-      StatBar(label: l10n.statNitro, value: stats.nitroPower / 2.5),
-    ];
-    return AppCard(
-      selected: selected,
-      onTap: onTap,
-      semanticLabel: stats.name,
-      child: Row(
-        children: [
-          Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              color: stats.color,
-              shape: BoxShape.circle,
+    final p = AppPalette.of(context);
+    final bars = carStatBars(l10n, stats);
+    return Opacity(
+      opacity: locked ? 0.55 : 1,
+      child: AppCard(
+        selected: selected,
+        onTap: onTap,
+        semanticLabel: stats.name,
+        child: Row(
+          children: [
+            Container(
+              width: 16,
+              height: 16,
+              decoration: BoxDecoration(color: stats.color, shape: BoxShape.circle),
             ),
-          ),
-          const SizedBox(width: AppSpace.m),
-          SizedBox(
-            width: 110,
-            child: Text(
-              stats.name,
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            const SizedBox(width: AppSpace.m),
+            SizedBox(
+              width: 110,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    stats.name,
+                    style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                  ),
+                  if (locked)
+                    Row(
+                      children: [
+                        const Icon(Icons.lock, size: 13),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            l10n.carLocked(lockCost),
+                            style: TextStyle(fontSize: 11, color: p.textMuted),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
             ),
-          ),
-          Expanded(child: Column(children: left)),
-          const SizedBox(width: AppSpace.m),
-          Expanded(child: Column(children: right)),
-        ],
+            Expanded(child: Column(children: bars.sublist(0, 3))),
+            const SizedBox(width: AppSpace.m),
+            Expanded(child: Column(children: bars.sublist(3))),
+          ],
+        ),
       ),
     );
   }

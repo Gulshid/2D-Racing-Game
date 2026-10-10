@@ -268,4 +268,258 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get english => 'English';
+
+  @override
+  String get garage => 'Garage';
+
+  @override
+  String get championship => 'Championship';
+
+  @override
+  String get rewards => 'Rewards';
+
+  @override
+  String carLocked(int cost) {
+    return 'Locked · $cost coins';
+  }
+
+  @override
+  String unlockFor(int cost) {
+    return 'Unlock for $cost';
+  }
+
+  @override
+  String get selected => 'Selected';
+
+  @override
+  String get lockedLabel => 'Locked';
+
+  @override
+  String get upgrade => 'Upgrade';
+
+  @override
+  String get upgradeEngine => 'Engine';
+
+  @override
+  String get upgradeEngineDesc => 'Top speed and acceleration';
+
+  @override
+  String get upgradeTires => 'Tires';
+
+  @override
+  String get upgradeTiresDesc => 'Grip and steering';
+
+  @override
+  String get upgradeBrakes => 'Brakes';
+
+  @override
+  String get upgradeBrakesDesc => 'Braking power';
+
+  @override
+  String get upgradeNitro => 'Nitro';
+
+  @override
+  String get upgradeNitroDesc => 'Longer and stronger boost';
+
+  @override
+  String buyFor(int cost) {
+    return 'Buy for $cost';
+  }
+
+  @override
+  String get maxLevel => 'MAX';
+
+  @override
+  String level(int level) {
+    return 'Level $level';
+  }
+
+  @override
+  String roundLabel(int number) {
+    return 'Round $number';
+  }
+
+  @override
+  String get roundDone => 'Done';
+
+  @override
+  String get roundNext => 'Next';
+
+  @override
+  String get roundUpcoming => 'Upcoming';
+
+  @override
+  String get standings => 'Standings';
+
+  @override
+  String points(int points) {
+    return '$points pts';
+  }
+
+  @override
+  String get noStandings => 'Points appear after the first round.';
+
+  @override
+  String get championshipLocked =>
+      'Unlock every championship track to start the season.';
+
+  @override
+  String raceRound(int number) {
+    return 'Race round $number';
+  }
+
+  @override
+  String get newSeason => 'Start new season';
+
+  @override
+  String get seasonComplete => 'Season complete';
+
+  @override
+  String get seasonChampion => 'Champion!';
+
+  @override
+  String get dailyReward => 'Daily reward';
+
+  @override
+  String get dailyRewardReady => 'Claim your login reward';
+
+  @override
+  String get dailyRewardDone => 'Come back tomorrow for more';
+
+  @override
+  String dailyStreak(int streak) {
+    return 'Day $streak streak';
+  }
+
+  @override
+  String get claim => 'Claim';
+
+  @override
+  String get claimed => 'Claimed';
+
+  @override
+  String get dailyChallenge => 'Daily challenge';
+
+  @override
+  String challengeDrifts(int target) {
+    return 'Drift $target times today';
+  }
+
+  @override
+  String challengeCleanLaps(int target) {
+    return 'Drive $target clean laps today';
+  }
+
+  @override
+  String challengeFinishes(int target) {
+    return 'Finish $target races today';
+  }
+
+  @override
+  String progressOf(int value, int target) {
+    return '$value / $target';
+  }
+
+  @override
+  String get achievements => 'Achievements';
+
+  @override
+  String get achFirstWin => 'First win';
+
+  @override
+  String get achFirstWinDesc => 'Win a race';
+
+  @override
+  String get achPodium => 'Podium';
+
+  @override
+  String get achPodiumDesc => 'Finish in the top three';
+
+  @override
+  String get achDrifter => 'Drift king';
+
+  @override
+  String get achDrifterDesc => 'Drift 10 times in one race';
+
+  @override
+  String get achPerfectLap => 'Perfect lap';
+
+  @override
+  String get achPerfectLapDesc => 'Finish a lap without hitting anything';
+
+  @override
+  String get achRacer10 => 'Veteran';
+
+  @override
+  String get achRacer10Desc => 'Race 10 times';
+
+  @override
+  String get achChampion => 'Champion';
+
+  @override
+  String get achChampionDesc => 'Win a championship season';
+
+  @override
+  String get statsRaces => 'Races';
+
+  @override
+  String get statsWins => 'Wins';
+
+  @override
+  String get statsPodiums => 'Podiums';
+
+  @override
+  String get statsDrifts => 'Drifts';
+
+  @override
+  String get statsCleanLaps => 'Clean laps';
+
+  @override
+  String get statsCoinsEarned => 'Coins earned';
+
+  @override
+  String rewardPosition(int amount) {
+    return 'Position +$amount';
+  }
+
+  @override
+  String rewardCoins(int amount) {
+    return 'Coins +$amount';
+  }
+
+  @override
+  String rewardCleanLaps(int amount) {
+    return 'Clean laps +$amount';
+  }
+
+  @override
+  String rewardDrifts(int amount) {
+    return 'Drifts +$amount';
+  }
+
+  @override
+  String rewardAchievements(int amount) {
+    return 'Achievements +$amount';
+  }
+
+  @override
+  String rewardSeason(int amount) {
+    return 'Season bonus +$amount';
+  }
+
+  @override
+  String rewardTotal(int amount) {
+    return 'Total +$amount';
+  }
+
+  @override
+  String champPoints(int points) {
+    return 'Championship +$points pts';
+  }
+
+  @override
+  String get achievementUnlocked => 'Achievement unlocked';
+
+  @override
+  String get dailyChallengeDone => 'Daily challenge complete!';
 }
