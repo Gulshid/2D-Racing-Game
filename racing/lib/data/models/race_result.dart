@@ -1,3 +1,5 @@
+import 'package:racing/data/models/progression_config.dart';
+
 /// One line of the final standings.
 class StandingEntry {
   const StandingEntry({
@@ -15,7 +17,7 @@ class StandingEntry {
   final double? time;
 }
 
-/// Everything the results screen needs after a race.
+/// Everything the results screen and the progression system need after a race.
 class RaceResult {
   const RaceResult({
     required this.trackName,
@@ -30,9 +32,13 @@ class RaceResult {
     required this.newBestLap,
     required this.newBestTotal,
     this.standings = const [],
+    this.trackId = '',
+    this.drifts = 0,
+    this.cleanLaps = 0,
   });
 
   final String trackName;
+  final String trackId;
   final int laps;
   final int position;
   final int carCount;
@@ -41,22 +47,26 @@ class RaceResult {
   final List<double> lapTimes;
   final int coins;
 
-  /// Coins earned: position bonus plus collected coins.
+  /// Total coins for the race (see [RaceReward]).
   final int reward;
   final bool newBestLap;
   final bool newBestTotal;
 
+  /// Drift starts during the race.
+  final int drifts;
+
+  /// Laps finished without hitting a wall or another car.
+  final int cleanLaps;
+
   /// All cars in finishing order (player included).
   final List<StandingEntry> standings;
 
-  static const List<int> positionRewards = [100, 60, 40, 25, 15, 10];
-  static const int coinValue = 5;
-
-  static int rewardFor(int position, int coins) {
-    final index = position - 1;
-    final base = (index >= 0 && index < positionRewards.length)
-        ? positionRewards[index]
-        : 5;
-    return base + coins * coinValue;
-  }
+  /// Kept so older callers still compile; the economy now lives in
+  /// [RaceReward].
+  static int rewardFor(int position, int coins) => RaceReward.of(
+        position: position,
+        coins: coins,
+        cleanLaps: 0,
+        drifts: 0,
+      ).total;
 }

@@ -12,6 +12,7 @@ import 'package:racing/core/constants/game_config.dart';
 import 'package:racing/data/models/ai_profile.dart';
 import 'package:racing/data/models/car_stats.dart';
 import 'package:racing/data/models/race_records.dart';
+import 'package:racing/data/models/progression_config.dart';
 import 'package:racing/data/models/race_result.dart';
 import 'package:racing/data/models/track_data.dart';
 import 'package:racing/game/components/car/ai_car.dart';
@@ -95,6 +96,12 @@ class RacingGame extends FlameGame with KeyboardEvents {
   String _lastLabel = '';
   bool _lastBoost = false;
   bool _finalLapMusic = false;
+
+  // ---- Progression counters for this race (Phase 10) --------------------------
+  int _drifts = 0;
+  bool _wasDrifting = false;
+  int _cleanLaps = 0;
+  bool _lapHadHit = false;
   late final GhostCar ghost = GhostCar();
   late final RaceCarState playerState =
       RaceCarState(id: 'player', name: carStats.name, isPlayer: true);
@@ -227,6 +234,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
     collisions.onWall = (c, point, normal, impact, slide) {
       feedback.wall(point, normal, impact, slide, isPlayer: isPlayer(c));
       if (isPlayer(c) && impact > 40) {
+        _lapHadHit = true;
         audio.playSfx(
           Sfx.impactWall,
           volume: clampD(impact / 420, 0.2, 1),
@@ -238,6 +246,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
       final involved = isPlayer(a) || isPlayer(b);
       feedback.carHit(point, impact, involvesPlayer: involved);
       if (involved && impact > 30) {
+        _lapHadHit = true;
         audio.playSfx(
           Sfx.impactCar,
           volume: clampD(impact / 380, 0.2, 1),
@@ -266,10 +275,15 @@ class RacingGame extends FlameGame with KeyboardEvents {
     };
 
     race.onLapStart = (s) {
-      if (s.isPlayer) _recorder.begin();
+      if (s.isPlayer) {
+        _recorder.begin();
+        _lapHadHit = false;
+      }
     };
     race.onLapComplete = (s, lapTime, lap) {
       if (!s.isPlayer) return;
+      if (!_lapHadHit) _cleanLaps++;
+      _lapHadHit = false;
       final record = RaceRecords.of(trackData.id);
       final best = record.bestLap;
       if (best == null || lapTime < best) {
@@ -371,6 +385,10 @@ class RacingGame extends FlameGame with KeyboardEvents {
     _lastLabel = '';
     _lastBoost = false;
     _finalLapMusic = false;
+    _drifts = 0;
+    _wasDrifting = false;
+    _cleanLaps = 0;
+    _lapHadHit = false;
   }
 
   /// Puts the player back on the road at the last checkpoint.
@@ -404,7 +422,15 @@ class RacingGame extends FlameGame with KeyboardEvents {
       bestLap: bestLap,
       lapTimes: List.of(playerState.lapTimes),
       coins: playerState.coins,
-      reward: RaceResult.rewardFor(playerState.position, playerState.coins),
+      reward: RaceReward.of(
+        position: playerState.position,
+        coins: playerState.coins,
+        cleanLaps: _cleanLaps,
+        drifts: _drifts,
+      ).total,
+      trackId: trackData.id,
+      drifts: _drifts,
+      cleanLaps: _cleanLaps,
       newBestLap: newBestLap,
       newBestTotal: newBestTotal,
       standings: _standings(),
@@ -524,6 +550,13 @@ class RacingGame extends FlameGame with KeyboardEvents {
       _finalLapMusic = true;
       audio.setMusicRate(1.06);
     }
+
+    // Count drift starts (for achievements and rewards).
+    final drifting = p.isDrifting;
+    if (drifting && !_wasDrifting && race.state == RaceState.racing) {
+      _drifts++;
+    }
+    _wasDrifting = drifting;
 
     // Nitro or boost pad: whoosh on the moment it starts.
     final boost = p.boostActive;

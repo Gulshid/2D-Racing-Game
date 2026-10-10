@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:racing/features/providers/settings_provider.dart';
 import 'package:racing/game/audio/audio_service.dart';
 import 'package:racing/data/models/ai_profile.dart';
-import 'package:racing/data/models/car_stats.dart';
+import 'package:racing/features/providers/progress_provider.dart';
 import 'package:racing/data/tracks/track_library.dart';
 import 'package:racing/game/overlays/hud_overlay.dart';
 import 'package:racing/game/overlays/loading_view.dart';
@@ -20,6 +20,7 @@ class RaceScreen extends ConsumerStatefulWidget {
     required this.carIndex,
     this.difficulty = AiDifficulty.medium,
     this.aiCount = 5,
+    this.championship = false,
     super.key,
   });
 
@@ -27,6 +28,7 @@ class RaceScreen extends ConsumerStatefulWidget {
   final int carIndex;
   final AiDifficulty difficulty;
   final int aiCount;
+  final bool championship;
 
   @override
   ConsumerState<RaceScreen> createState() => _RaceScreenState();
@@ -35,13 +37,14 @@ class RaceScreen extends ConsumerStatefulWidget {
 class _RaceScreenState extends ConsumerState<RaceScreen>
     with WidgetsBindingObserver {
   late final RacingGame _game;
+  bool _recorded = false;
 
   @override
   void initState() {
     super.initState();
     _game = RacingGame(
       trackData: TrackLibrary.byId(widget.trackId),
-      carStats: CarPresets.byIndex(widget.carIndex),
+      carStats: ref.read(progressProvider.notifier).statsFor(widget.carIndex),
       difficulty: widget.difficulty,
       aiCount: widget.aiCount,
       audio: ref.read(audioServiceProvider),
@@ -49,11 +52,28 @@ class _RaceScreenState extends ConsumerState<RaceScreen>
       haptics: ref.read(settingsProvider).haptics,
     );
     WidgetsBinding.instance.addObserver(this);
+    _game.result.addListener(_onResult);
+  }
+
+  /// Saves the race once, when the result first appears.
+  void _onResult() {
+    final r = _game.result.value;
+    if (r == null) {
+      _recorded = false;
+      return;
+    }
+    if (_recorded) return;
+    _recorded = true;
+    ref.read(progressProvider.notifier).recordRace(
+          r,
+          championship: widget.championship,
+        );
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _game.result.removeListener(_onResult);
     _game.audio.stopRaceAudio();
     super.dispose();
   }
