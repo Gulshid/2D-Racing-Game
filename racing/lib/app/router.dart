@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:racing/app/design/app_widgets.dart';
+import 'package:racing/game/audio/menu_music.dart';
 import 'package:racing/core/constants/game_config.dart';
 import 'package:racing/data/models/ai_profile.dart';
 import 'package:racing/data/tracks/track_library.dart';
@@ -51,28 +52,28 @@ final GoRouter appRouter = GoRouter(
       path: AppRoutes.menu,
       pageBuilder: (context, state) => slideFadePage(
         key: state.pageKey,
-        child: const MenuScreen(),
+        child: MenuMusic(child: MenuScreen()),
       ),
     ),
     GoRoute(
       path: AppRoutes.tracks,
       pageBuilder: (context, state) => slideFadePage(
         key: state.pageKey,
-        child: const TrackSelectScreen(),
+        child: MenuMusic(child: TrackSelectScreen()),
       ),
     ),
     GoRoute(
       path: AppRoutes.cars,
       pageBuilder: (context, state) => slideFadePage(
         key: state.pageKey,
-        child: const CarSelectScreen(),
+        child: MenuMusic(child: CarSelectScreen()),
       ),
     ),
     GoRoute(
       path: AppRoutes.settings,
       pageBuilder: (context, state) => slideFadePage(
         key: state.pageKey,
-        child: const SettingsScreen(),
+        child: MenuMusic(child: SettingsScreen()),
       ),
     ),
     GoRoute(

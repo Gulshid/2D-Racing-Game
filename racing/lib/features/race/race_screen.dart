@@ -1,5 +1,8 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:racing/features/providers/settings_provider.dart';
+import 'package:racing/game/audio/audio_service.dart';
 import 'package:racing/data/models/ai_profile.dart';
 import 'package:racing/data/models/car_stats.dart';
 import 'package:racing/data/tracks/track_library.dart';
@@ -11,7 +14,7 @@ import 'package:racing/game/overlays/touch_controls_overlay.dart';
 import 'package:racing/game/overlays/tuning_overlay.dart';
 import 'package:racing/game/racing_game.dart';
 
-class RaceScreen extends StatefulWidget {
+class RaceScreen extends ConsumerStatefulWidget {
   const RaceScreen({
     required this.trackId,
     required this.carIndex,
@@ -26,10 +29,11 @@ class RaceScreen extends StatefulWidget {
   final int aiCount;
 
   @override
-  State<RaceScreen> createState() => _RaceScreenState();
+  ConsumerState<RaceScreen> createState() => _RaceScreenState();
 }
 
-class _RaceScreenState extends State<RaceScreen> with WidgetsBindingObserver {
+class _RaceScreenState extends ConsumerState<RaceScreen>
+    with WidgetsBindingObserver {
   late final RacingGame _game;
 
   @override
@@ -40,6 +44,9 @@ class _RaceScreenState extends State<RaceScreen> with WidgetsBindingObserver {
       carStats: CarPresets.byIndex(widget.carIndex),
       difficulty: widget.difficulty,
       aiCount: widget.aiCount,
+      audio: ref.read(audioServiceProvider),
+      quality: ref.read(settingsProvider).graphicsQuality,
+      haptics: ref.read(settingsProvider).haptics,
     );
     WidgetsBinding.instance.addObserver(this);
   }
@@ -47,6 +54,7 @@ class _RaceScreenState extends State<RaceScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _game.audio.stopRaceAudio();
     super.dispose();
   }
 

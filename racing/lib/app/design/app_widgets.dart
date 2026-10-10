@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:racing/app/design/app_palette.dart';
 import 'package:racing/core/utils/math_utils.dart';
+import 'package:racing/game/audio/audio_service.dart';
 
 /// Page frame: safe area, back button, title, and content centred and
 /// capped in width so it stays readable on large screens.
@@ -74,7 +76,7 @@ class ScreenFrame extends StatelessWidget {
 }
 
 /// Main action button. Primary = filled accent, otherwise outlined.
-class AppButton extends StatelessWidget {
+class AppButton extends ConsumerWidget {
   const AppButton({
     required this.label,
     required this.onPressed,
@@ -89,7 +91,13 @@ class AppButton extends StatelessWidget {
   final bool primary;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final VoidCallback? handler = onPressed == null
+        ? null
+        : () {
+            ref.read(audioServiceProvider).playSfx(Sfx.uiClick);
+            onPressed!();
+          };
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -112,8 +120,8 @@ class AppButton extends StatelessWidget {
     return SizedBox(
       height: AppSpace.touch,
       child: primary
-          ? FilledButton(onPressed: onPressed, child: content)
-          : OutlinedButton(onPressed: onPressed, child: content),
+          ? FilledButton(onPressed: handler, child: content)
+          : OutlinedButton(onPressed: handler, child: content),
     );
   }
 }
