@@ -9,6 +9,7 @@ class HudState {
     this.nitro = 1,
     this.nitroActive = false,
     this.drifting = false,
+    this.integrity = 1,
   });
 
   final int speedKmh;
@@ -17,6 +18,10 @@ class HudState {
   final bool nitroActive;
   final bool drifting;
 
+  /// Car condition: 1 = pristine, 0 = worst. Rounded so tiny changes do not
+  /// rebuild the HUD.
+  final double integrity;
+
   @override
   bool operator ==(Object other) =>
       other is HudState &&
@@ -24,9 +29,10 @@ class HudState {
       other.surface == surface &&
       other.nitro == nitro &&
       other.nitroActive == nitroActive &&
-      other.drifting == drifting;
+      other.drifting == drifting &&
+      other.integrity == integrity;
 
   @override
   int get hashCode =>
-      Object.hash(speedKmh, surface, nitro, nitroActive, drifting);
+      Object.hash(speedKmh, surface, nitro, nitroActive, drifting, integrity);
 }

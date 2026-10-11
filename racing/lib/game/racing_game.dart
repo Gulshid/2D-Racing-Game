@@ -15,6 +15,8 @@ import 'package:racing/data/models/race_records.dart';
 import 'package:racing/data/models/progression_config.dart';
 import 'package:racing/data/models/race_result.dart';
 import 'package:racing/data/models/track_data.dart';
+import 'package:racing/data/models/weather_type.dart';
+import 'package:racing/game/components/effects/rain_view.dart';
 import 'package:racing/game/components/car/ai_car.dart';
 import 'package:racing/game/components/car/car_physics.dart';
 import 'package:racing/game/components/car/ghost_car.dart';
@@ -60,6 +62,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
     this.haptics = true,
     this.controlScheme = ControlScheme.buttons,
     this.steerSensitivity = 1.0,
+    this.weather = WeatherType.clear,
   });
 
   static const String hudOverlay = 'hud';
@@ -88,6 +91,9 @@ class RacingGame extends FlameGame with KeyboardEvents {
   /// strength (0.5..1.5).
   final ControlScheme controlScheme;
   final double steerSensitivity;
+
+  /// Dry or wet race. Rain lowers grip for every car and draws rain.
+  final WeatherType weather;
 
   // ---- Performance (Phase 11) ------------------------------------------------
   /// Real frame times from Flutter's frame timings.
@@ -118,12 +124,14 @@ class RacingGame extends FlameGame with KeyboardEvents {
   late final GroundEffectsView groundFx = GroundEffectsView(effects);
   late final ParticleEffectsView particleFx = ParticleEffectsView(effects);
   late final ScreenEffects screenFx = ScreenEffects(quality: quality);
+  late final RainView rainFx = RainView(weather: weather, quality: quality);
   double _audioClock = 0;
   double _lastEngineTick = -1;
   RaceState _lastRaceState = RaceState.idle;
   String _lastLabel = '';
   bool _lastBoost = false;
   bool _finalLapMusic = false;
+  double _lastDamageAt = -1;
 
   // ---- Progression counters for this race (Phase 10) --------------------------
   int _drifts = 0;
@@ -212,7 +220,10 @@ class RacingGame extends FlameGame with KeyboardEvents {
     debugMode = GameConfig.debugOverlays;
     await _preloadAssets();
 
-    camera.viewport.add(FpsTextComponent(position: Vector2(12, 8)));
+    // The FPS counter is a developer tool: never shown in release builds.
+    if (kDebugMode) {
+      camera.viewport.add(FpsTextComponent(position: Vector2(12, 8)));
+    }
 
     // Scenery, props and cars.
     await world.add(TrackComponent(track));
@@ -238,6 +249,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
     await world.add(groundFx);
     await world.add(particleFx);
     camera.viewport.add(screenFx);
+    if (weather.isWet) camera.viewport.add(rainFx);
     await world.add(AiDebugOverlay());
     await world.add(cameraController);
 
@@ -262,8 +274,15 @@ class RacingGame extends FlameGame with KeyboardEvents {
 
     bool isPlayer(Object c) => identical(c, car.physics);
 
+    for (final p in allPhysics) {
+      p.weatherGrip = weather.gripFor;
+    }
+
     collisions.onWall = (c, point, normal, impact, slide) {
       feedback.wall(point, normal, impact, slide, isPlayer: isPlayer(c));
+      if (isPlayer(c)) {
+        _damageHit(impact);
+      }
       if (isPlayer(c) && impact > 40) {
         _lapHadHit = true;
         audio.playSfx(
@@ -276,6 +295,9 @@ class RacingGame extends FlameGame with KeyboardEvents {
     collisions.onCarHit = (a, b, point, impact) {
       final involved = isPlayer(a) || isPlayer(b);
       feedback.carHit(point, impact, involvesPlayer: involved);
+      if (involved) {
+        _damageHit(impact, factor: GameConfig.damageCarHitFactor);
+      }
       if (involved && impact > 30) {
         _lapHadHit = true;
         audio.playSfx(
@@ -313,6 +335,8 @@ class RacingGame extends FlameGame with KeyboardEvents {
     };
     race.onLapComplete = (s, lapTime, lap) {
       if (!s.isPlayer) return;
+      // Quick lap service: part of the damage is repaired every lap.
+      car.physics.damage.repair(GameConfig.lapServiceRepair);
       if (!_lapHadHit) _cleanLaps++;
       _lapHadHit = false;
       final record = RaceRecords.of(trackData.id);
@@ -325,6 +349,17 @@ class RacingGame extends FlameGame with KeyboardEvents {
     race.onFinish = (s) {
       if (s.isPlayer) _onPlayerFinished();
     };
+  }
+
+  /// Applies damage to the player's car from an impact. A short cooldown
+  /// stops one contact (which can fire several circle-pair hits in the same
+  /// step) from counting more than once.
+  void _damageHit(double impact, {double factor = 1}) {
+    if (!race.canDrive) return;
+    if (_audioClock - _lastDamageAt < GameConfig.damageCooldown) return;
+    if (car.physics.damage.hit(impact, factor: factor) > 0) {
+      _lastDamageAt = _audioClock;
+    }
   }
 
   List<AiCar> _buildAiCars() {
@@ -378,6 +413,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
   void restart() {
     final spawn = track.spawn(0);
     car.resetTo(spawn.position, spawn.heading);
+    car.physics.damage.reset();
     input.reset();
     _stepper.reset();
     cameraController.snap();
@@ -417,6 +453,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
     _lastLabel = '';
     _lastBoost = false;
     _finalLapMusic = false;
+    _lastDamageAt = -1;
     _drifts = 0;
     _wasDrifting = false;
     _cleanLaps = 0;
@@ -567,6 +604,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
       _level = next;
       effects.setQuality(next);
       screenFx.setQuality(next);
+      rainFx.setQuality(next);
       perf.noteQualityChange(next);
     }
     final report = perf.tick(
@@ -695,6 +733,7 @@ class RacingGame extends FlameGame with KeyboardEvents {
       nitro: (p.nitro * 100).round() / 100,
       nitroActive: p.boostActive,
       drifting: p.isDrifting,
+      integrity: (p.damage.integrity * 50).round() / 50,
     );
     if (nextHud != hud.value) hud.value = nextHud;
 
