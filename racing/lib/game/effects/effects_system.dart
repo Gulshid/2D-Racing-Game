@@ -198,6 +198,7 @@ class _CarFx {
   double dust = 0;
   double smoke = 0;
   double flame = 0;
+  double engineSmoke = 0;
 
   void reset() {
     left.has = false;
@@ -310,6 +311,19 @@ class EffectsSystem {
       }
     }
 
+    // Dark smoke from the bonnet when the car is badly damaged.
+    if (p.damage.integrity < 0.45 && p.speed > 30) {
+      final rate = 8 + 22 * (0.45 - p.damage.integrity) / 0.45;
+      fx.engineSmoke += dt * rate * scale;
+      while (fx.engineSmoke >= 1) {
+        fx.engineSmoke -= 1;
+        _spawnEngineSmoke(
+          p.position.x + fwdX * GameConfig.carLength * 0.3,
+          p.position.y + fwdY * GameConfig.carLength * 0.3,
+        );
+      }
+    }
+
     // Nitro / boost flame behind the car.
     if (p.boostActive && p.speed > 40) {
       fx.flame += dt * 70 * scale;
@@ -359,6 +373,20 @@ class EffectsSystem {
       size1: _r(14, 20),
       rgb: 0xC8C8CD,
       alpha: 150,
+    );
+  }
+
+  void _spawnEngineSmoke(double x, double y) {
+    particles.emit(
+      x + _r(-4, 4),
+      y + _r(-4, 4),
+      _r(-18, 18),
+      _r(-18, 18),
+      life: _r(0.7, 1.1),
+      size0: 4,
+      size1: _r(12, 17),
+      rgb: 0x3A3A3F,
+      alpha: 140,
     );
   }
 
