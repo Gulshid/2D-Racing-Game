@@ -522,4 +522,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dailyChallengeDone => 'Daily challenge complete!';
+
+  @override
+  String get weather => 'Weather';
+
+  @override
+  String get weatherClear => 'Clear';
+
+  @override
+  String get weatherRain => 'Rain (less grip)';
+
+  @override
+  String get carCondition => 'Car';
+
+  @override
+  String get carDamaged => 'Damaged';
 }

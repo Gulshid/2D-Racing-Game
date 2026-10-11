@@ -385,5 +385,10 @@
     }
   },
   "achievementUnlocked": "Achievement unlocked",
-  "dailyChallengeDone": "Daily challenge complete!"
+  "dailyChallengeDone": "Daily challenge complete!",
+  "weather": "Weather",
+  "weatherClear": "Clear",
+  "weatherRain": "Rain (less grip)",
+  "carCondition": "Car",
+  "carDamaged": "Damaged"
 }

@@ -8,6 +8,7 @@ import 'package:racing/core/constants/game_config.dart';
 import 'package:racing/data/models/ai_profile.dart';
 import 'package:racing/data/models/car_stats.dart';
 import 'package:racing/data/models/progression_config.dart';
+import 'package:racing/data/models/weather_type.dart';
 import 'package:racing/data/tracks/track_library.dart';
 import 'package:racing/features/progress/car_stat_bars.dart';
 import 'package:racing/features/providers/progress_provider.dart';
@@ -68,6 +69,13 @@ class CarSelectScreen extends ConsumerWidget {
                       onCount: notifier.setOpponents,
                     ),
                   ),
+                  const SizedBox(height: AppSpace.m),
+                  AppCard(
+                    child: _WeatherPanel(
+                      weather: setup.weather,
+                      onWeather: notifier.selectWeather,
+                    ),
+                  ),
                   const SizedBox(height: AppSpace.l),
                   AppButton(
                     label: l10n.startRace,
@@ -80,6 +88,7 @@ class CarSelectScreen extends ConsumerWidget {
                                 carIndex: setup.carIndex,
                                 difficulty: setup.difficulty,
                                 aiCount: setup.opponents,
+                                weather: setup.weather,
                               ),
                             )
                         : null,
@@ -159,6 +168,50 @@ class _CarTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Dry or wet race. Rain lowers grip for every car.
+class _WeatherPanel extends StatelessWidget {
+  const _WeatherPanel({required this.weather, required this.onWeather});
+
+  final WeatherType weather;
+  final ValueChanged<WeatherType> onWeather;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.weather.toUpperCase(),
+          style: TextStyle(
+            fontSize: 12,
+            letterSpacing: 2,
+            color: p.textMuted,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: AppSpace.s),
+        Wrap(
+          spacing: AppSpace.s,
+          children: [
+            for (final w in WeatherType.values)
+              ChoiceChip(
+                avatar: Icon(
+                  w.isWet ? Icons.water_drop : Icons.wb_sunny,
+                  size: 16,
+                ),
+                label: Text(weatherName(l10n, w)),
+                selected: w == weather,
+                onSelected: (_) => onWeather(w),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }

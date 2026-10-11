@@ -1,5 +1,6 @@
 import 'package:racing/data/models/ai_profile.dart';
 import 'package:racing/data/models/app_settings.dart';
+import 'package:racing/data/models/weather_type.dart';
 import 'package:racing/l10n/app_localizations.dart';
 
 /// Localized labels for enums and track difficulty numbers.
@@ -54,4 +55,9 @@ String achievementDescription(AppLocalizations l, String id) => switch (id) {
       'racer_10' => l.achRacer10Desc,
       'champion' => l.achChampionDesc,
       _ => '',
+    };
+
+String weatherName(AppLocalizations l, WeatherType w) => switch (w) {
+      WeatherType.clear => l.weatherClear,
+      WeatherType.rain => l.weatherRain,
     };

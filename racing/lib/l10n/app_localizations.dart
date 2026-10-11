@@ -993,6 +993,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Daily challenge complete!'**
   String get dailyChallengeDone;
+
+  /// No description provided for @weather.
+  ///
+  /// In en, this message translates to:
+  /// **'Weather'**
+  String get weather;
+
+  /// No description provided for @weatherClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get weatherClear;
+
+  /// No description provided for @weatherRain.
+  ///
+  /// In en, this message translates to:
+  /// **'Rain (less grip)'**
+  String get weatherRain;
+
+  /// No description provided for @carCondition.
+  ///
+  /// In en, this message translates to:
+  /// **'Car'**
+  String get carCondition;
+
+  /// No description provided for @carDamaged.
+  ///
+  /// In en, this message translates to:
+  /// **'Damaged'**
+  String get carDamaged;
 }
 
 class _AppLocalizationsDelegate

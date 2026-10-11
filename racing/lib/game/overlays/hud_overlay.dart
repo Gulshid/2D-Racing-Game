@@ -375,6 +375,8 @@ class _Speedometer extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 4),
+              _ConditionBar(integrity: s.integrity, cues: cues),
               const SizedBox(height: 2),
               Text(
                 s.surface.label,
@@ -384,6 +386,54 @@ class _Speedometer extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Car condition bar. Green when healthy, amber when worn, red when badly
+/// damaged. With colour-blind cues on it also shows a wrench icon and the
+/// word "Damaged", so it never relies on colour alone.
+class _ConditionBar extends StatelessWidget {
+  const _ConditionBar({required this.integrity, required this.cues});
+
+  final double integrity;
+  final bool cues;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final p = AppPalette.of(context);
+    final worn = integrity < 0.6;
+    final bad = integrity < 0.3;
+    final color = bad ? p.danger : (worn ? p.gold : p.info);
+    return Semantics(
+      label: '${l10n.carCondition} ${(integrity * 100).round()}%',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (cues && worn) ...[
+            Icon(Icons.build, size: 14, color: color),
+            const SizedBox(width: 2),
+          ],
+          Text(
+            bad && cues ? l10n.carDamaged : l10n.carCondition,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(width: 6),
+          SizedBox(
+            width: 120,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: integrity,
+                minHeight: 6,
+                backgroundColor: p.border,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
