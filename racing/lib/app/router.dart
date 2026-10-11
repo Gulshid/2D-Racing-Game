@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:racing/app/design/app_widgets.dart';
 import 'package:racing/core/constants/game_config.dart';
 import 'package:racing/data/models/ai_profile.dart';
+import 'package:racing/data/models/weather_type.dart';
 import 'package:racing/data/tracks/track_library.dart';
 import 'package:racing/features/car_select/car_select_screen.dart';
 import 'package:racing/features/championship/championship_screen.dart';
@@ -26,13 +27,14 @@ abstract final class AppRoutes {
   static const race = '/race';
 
   /// Builds the race URL:
-  /// /race?track=<id>&car=<index>&diff=<0..2>&ai=<0..6>[&champ=1]
+  /// /race?track=<id>&car=<index>&diff=<0..2>&ai=<0..6>[&wx=<0..1>][&champ=1]
   static String raceUrl({
     required String trackId,
     required int carIndex,
     AiDifficulty difficulty = AiDifficulty.medium,
     int aiCount = GameConfig.aiDefaultOpponents,
     bool championship = false,
+    WeatherType weather = WeatherType.clear,
   }) =>
       Uri(
         path: race,
@@ -41,6 +43,7 @@ abstract final class AppRoutes {
           'car': '$carIndex',
           'diff': '${difficulty.index}',
           'ai': '$aiCount',
+          if (weather != WeatherType.clear) 'wx': '${weather.index}',
           if (championship) 'champ': '1',
         },
       ).toString();
@@ -121,6 +124,7 @@ final GoRouter appRouter = GoRouter(
                 .clamp(0, GameConfig.aiMaxOpponents)
                 .toInt(),
             championship: q['champ'] == '1',
+            weather: WeatherType.fromIndex(int.tryParse(q['wx'] ?? '')),
           ),
         );
       },

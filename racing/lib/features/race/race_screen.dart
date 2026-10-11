@@ -1,9 +1,11 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:racing/core/services/analytics.dart';
 import 'package:racing/features/providers/settings_provider.dart';
 import 'package:racing/game/audio/audio_service.dart';
 import 'package:racing/data/models/ai_profile.dart';
+import 'package:racing/data/models/weather_type.dart';
 import 'package:racing/features/providers/progress_provider.dart';
 import 'package:racing/data/tracks/track_library.dart';
 import 'package:racing/game/overlays/hud_overlay.dart';
@@ -21,6 +23,7 @@ class RaceScreen extends ConsumerStatefulWidget {
     this.difficulty = AiDifficulty.medium,
     this.aiCount = 5,
     this.championship = false,
+    this.weather = WeatherType.clear,
     super.key,
   });
 
@@ -29,6 +32,7 @@ class RaceScreen extends ConsumerStatefulWidget {
   final AiDifficulty difficulty;
   final int aiCount;
   final bool championship;
+  final WeatherType weather;
 
   @override
   ConsumerState<RaceScreen> createState() => _RaceScreenState();
@@ -47,6 +51,7 @@ class _RaceScreenState extends ConsumerState<RaceScreen>
       carStats: ref.read(progressProvider.notifier).statsFor(widget.carIndex),
       difficulty: widget.difficulty,
       aiCount: widget.aiCount,
+      weather: widget.weather,
       audio: ref.read(audioServiceProvider),
       quality: ref.read(settingsProvider).graphicsQuality,
       haptics: ref.read(settingsProvider).haptics,
@@ -55,6 +60,14 @@ class _RaceScreenState extends ConsumerState<RaceScreen>
     );
     WidgetsBinding.instance.addObserver(this);
     _game.result.addListener(_onResult);
+    ref.read(analyticsProvider).logEvent(AnalyticsEvents.raceStart, {
+      'track': widget.trackId,
+      'car': widget.carIndex,
+      'difficulty': widget.difficulty.name,
+      'ai': widget.aiCount,
+      'weather': widget.weather.name,
+      'championship': widget.championship,
+    });
   }
 
   /// Saves the race once, when the result first appears.
@@ -66,6 +79,12 @@ class _RaceScreenState extends ConsumerState<RaceScreen>
     }
     if (_recorded) return;
     _recorded = true;
+    ref.read(analyticsProvider).logEvent(AnalyticsEvents.raceFinish, {
+      'track': widget.trackId,
+      'position': r.position,
+      'time': r.totalTime,
+      'weather': widget.weather.name,
+    });
     ref.read(progressProvider.notifier).recordRace(
           r,
           championship: widget.championship,
