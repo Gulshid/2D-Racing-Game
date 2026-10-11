@@ -5,6 +5,7 @@ import 'package:racing/core/constants/game_config.dart';
 import 'package:racing/core/utils/math_utils.dart';
 import 'package:racing/data/models/car_stats.dart';
 import 'package:racing/data/models/surface_type.dart';
+import 'package:racing/game/systems/car_damage.dart';
 import 'package:racing/game/systems/input_controller.dart';
 
 /// Arcade car physics. Pure Dart (no rendering) so it can be unit tested and
@@ -38,6 +39,14 @@ class CarPhysics {
 
   /// Greater than 0 for a short time after touching a wall.
   double wallContact = 0;
+
+  /// Wear on this car. Survives [reset] (respawns); the game repairs it on
+  /// restart. Only the player's car is damaged in races.
+  final CarDamage damage = CarDamage();
+
+  /// Multiplies surface grip for the current weather (1 = dry). Set by the
+  /// game from WeatherType.gripFor; the default keeps dry behaviour.
+  double Function(SurfaceType surface)? weatherGrip;
 
   /// Last known centerline index; speeds up track queries.
   int trackHint = -1;
@@ -92,7 +101,11 @@ class CarPhysics {
     wallContact = math.max(0, wallContact - dt);
 
     // ---- Steering smoothing (digital buttons -> smooth analog) -------------
-    final target = clampD(input.steer, -1, 1);
+    var target = clampD(input.steer, -1, 1);
+    // A damaged car drifts to one side while it is moving.
+    if (damage.isDamaged && speed > 40) {
+      target = clampD(target + damage.steerPull, -1, 1);
+    }
     final sameDirection = target != 0 && target.sign == steerInput.sign;
     final rate = (target == 0 || (steerInput != 0 && !sameDirection))
         ? GameConfig.steerReturnRate
@@ -154,16 +167,19 @@ class CarPhysics {
     var vL = velocity.x * rx + velocity.y * ry;
 
     // ---- Engine, brake, reverse --------------------------------------------
+    final wear = damage.performance;
+    final surfGrip = surf.grip * (weatherGrip?.call(surf) ?? 1.0);
     final topSpeed = s.maxSpeed *
+        wear *
         surf.speed *
         (boosted ? GameConfig.nitroTopSpeedBoost : 1.0);
     final accelMultiplier = nitroActive
         ? s.nitroPower
         : (boosting ? GameConfig.padBoostPower : 1.0);
-    final accel = s.acceleration * accelMultiplier;
+    final accel = s.acceleration * wear * accelMultiplier;
     final throttle = boosted ? 1.0 : clampD(input.throttle, 0, 1);
     final brake = clampD(input.brake, 0, 1);
-    final traction = 0.35 + 0.65 * clampD(surf.grip, 0, 1);
+    final traction = 0.35 + 0.65 * clampD(surfGrip, 0, 1);
 
     if (throttle > 0) {
       final ratio = clampD(vF / topSpeed, 0, 1);
@@ -194,7 +210,7 @@ class CarPhysics {
     }
 
     // ---- Lateral grip (this is what makes drifting) -------------------------
-    var gripRate = s.grip * surf.grip;
+    var gripRate = s.grip * surfGrip;
     gripRate *= 1 - s.slideTendency * steerInput.abs() * speedRatio;
     if (input.handbrake) {
       gripRate *= s.driftFactor;
