@@ -104,6 +104,40 @@ abstract final class GameConfig {
   static const double padBoostPower = 2.2;
   static const double padKick = 120;
 
+
+  // ---- Damage --------------------------------------------------------------
+  /// Impacts slower than this (px/s) leave no damage.
+  static const double damageMinImpact = 70;
+
+  /// Damage (0..1) per px/s of impact speed above [damageMinImpact].
+  static const double damagePerSpeed = 0.0011;
+
+  /// Seconds before the player can take damage again.
+  static const double damageCooldown = 0.12;
+
+  /// Car-to-car hits hurt less than hitting a wall.
+  static const double damageCarHitFactor = 0.6;
+
+  /// A wrecked car keeps this fraction of its top speed and acceleration.
+  static const double damageMinPerformance = 0.7;
+
+  /// Damage is capped so a car can always finish the race.
+  static const double damageMax = 0.85;
+
+  /// Fraction of damage repaired each time the player completes a lap.
+  static const double lapServiceRepair = 0.25;
+
+  /// Max steering pull (0..1 of full lock) from a badly damaged car.
+  static const double damageSteerPull = 0.12;
+
+  // ---- Weather -------------------------------------------------------------
+  /// Rain: fraction of grip kept on each surface (see WeatherType).
+  static const double rainAsphaltGrip = 0.82;
+  static const double rainGrassGrip = 0.85;
+
+  /// Rain drops drawn on high quality (scaled down for lower presets).
+  static const int rainDropsHigh = 140;
+
   // ---- Anti-stuck ----------------------------------------------------------
   static const double stuckTime = 3;
   static const double stuckSpeed = 30;
